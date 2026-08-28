@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="ui-monospace, 'JetBrains Mono', 'DejaVu Sans Mono', monospace">
+  <!-- The link preview: the first thing anyone sees when this is pasted into Slack,
+       Teams or LinkedIn. The scores on it are asserted against the repository by
+       scripts/tests/test_readme_claims.py, because a social card with a stale number is
+       a claim like any other — and it is the claim seen by the most people.
+       Re-render after editing:  just social-card  -->
+  <defs>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fe8019" stop-opacity="0.16"/>
+      <stop offset="55%" stop-color="#83a598" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#1d2021" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#1d2021"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="0" y="0" width="1200" height="6" fill="#fe8019"/>
+
+  <rect x="72" y="86" width="9" height="34" fill="#fe8019"/>
+  <text x="96" y="113" fill="#fbf1c7" font-size="26" font-weight="700">agentic-sdlc</text>
+  <text x="72" y="163" fill="#928374" font-size="19">A runnable reference implementation of the Agentic SDLC Playbook</text>
+
+  <text x="72" y="258" fill="#fbf1c7" font-size="55" font-weight="700">The operating model,</text>
+  <text x="72" y="322" fill="#fbf1c7" font-size="55" font-weight="700">as code that runs.</text>
+
+  <text x="72" y="384" fill="#bdae93" font-size="23">Gates that refuse. Evidence as a by-product. No model in the gate.</text>
+
+  <g font-size="17">
+    <rect x="72"  y="430" width="238" height="96" rx="6" fill="#282828" stroke="#3c3836"/>
+    <text x="94"  y="472" fill="#b8bb26" font-size="30" font-weight="700">12/12</text>
+    <text x="94"  y="500" fill="#a89984">gates proven to refuse</text>
+
+    <rect x="334" y="430" width="238" height="96" rx="6" fill="#282828" stroke="#3c3836"/>
+    <text x="356" y="472" fill="#b8bb26" font-size="30" font-weight="700">12/12</text>
+    <text x="356" y="500" fill="#a89984">Substitution Test</text>
+
+    <rect x="596" y="430" width="238" height="96" rx="6" fill="#282828" stroke="#3c3836"/>
+    <text x="618" y="472" fill="#b8bb26" font-size="30" font-weight="700">24/24</text>
+    <text x="618" y="500" fill="#a89984">configuration evals</text>
+
+    <rect x="858" y="430" width="270" height="96" rx="6" fill="#282828" stroke="#3c3836"/>
+    <text x="880" y="472" fill="#fabd2f" font-size="30" font-weight="700">1 line</text>
+    <text x="880" y="500" fill="#a89984">to change agent vendor</text>
+  </g>
+
+  <text x="72" y="580" fill="#665c54" font-size="17">olafkfreund.github.io/agentic-sdlc-showcase</text>
+</svg>

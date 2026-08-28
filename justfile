@@ -114,6 +114,12 @@ chain:
 
 # ---------------------------------------------------------------- the site
 
+# Re-render the link-preview card after editing site/assets/social-card.svg.
+social-card:
+    @nix shell nixpkgs#resvg --command resvg --width 1200 --height 630 \
+        site/assets/social-card.svg site/assets/social-card.png
+    @echo "  rendered site/assets/social-card.png"
+
 # Generate the derived pages the site publishes from this tree.
 site-build:
     @{{ py }} site/build_pages.py

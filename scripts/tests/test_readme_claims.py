@@ -10,6 +10,7 @@ import re
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 README = (ROOT / "README.md").read_text()
+SOCIAL_CARD = (ROOT / "site/assets/social-card.svg").read_text()
 
 
 def _claim(label: str) -> int:
@@ -35,3 +36,20 @@ def test_negative_test_count_matches_readme():
 def test_substitution_check_count_matches_readme():
     source = (ROOT / "scripts/substitution_test.py").read_text()
     assert _claim("Substitution Test") == len(re.findall(r"^def check_\d+\(", source, re.M))
+
+
+def test_social_card_scores_match_the_repository():
+    """The link preview is the claim the most people see, and the fewest verify."""
+    negative = (ROOT / "scripts/demo/negative/run_all.sh").read_text()
+    substitution = (ROOT / "scripts/substitution_test.py").read_text()
+
+    cases = len(list((ROOT / ".agent/evals/cases").glob("*.yaml")))
+    refusals = len(re.findall(r"^expect_red ", negative, re.M))
+    checks = len(re.findall(r"^def check_\d+\(", substitution, re.M))
+
+    for score, label in (
+        (f"{refusals}/{refusals}", "gates proven to refuse"),
+        (f"{checks}/{checks}", "Substitution Test"),
+        (f"{cases}/{cases}", "configuration evals"),
+    ):
+        assert score in SOCIAL_CARD, f"social card no longer claims {score} for {label}"

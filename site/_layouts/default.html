@@ -6,9 +6,23 @@
   <title>{% if page.title and page.url != "/" %}{{ page.title }} · {{ site.title }}{% else %}{{ site.title }} — {{ site.tagline }}{% endif %}</title>
   <meta name="description" content="{{ page.description | default: site.description | strip_newlines }}">
   <meta name="theme-color" content="#1d2021">
-  <meta property="og:title" content="{{ page.title | default: site.title }}">
-  <meta property="og:description" content="{{ page.description | default: site.description | strip_newlines }}">
+  <!-- Shared into Slack, Teams or LinkedIn, this is the whole first impression. The
+       home page's `title` is its nav label ("Overview"), which is useless as a preview,
+       so the site title is used there and the page title everywhere else. -->
+  {%- assign og_title = page.title | default: site.title %}
+  {%- if page.url == "/" %}{% assign og_title = site.title | append: " — " | append: site.tagline %}{% endif %}
+  <meta property="og:title" content="{{ og_title }}">
+  <meta property="og:description" content="{{ page.description | default: page.lede | default: site.description | strip_newlines }}">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ page.url | absolute_url }}">
+  <meta property="og:site_name" content="{{ site.title }}">
+  <meta property="og:image" content="{{ '/assets/social-card.png' | absolute_url }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ og_title }}">
+  <meta name="twitter:description" content="{{ page.description | default: page.lede | default: site.description | strip_newlines }}">
+  <meta name="twitter:image" content="{{ '/assets/social-card.png' | absolute_url }}">
   <link rel="stylesheet" href="{{ '/assets/css/gruvbox.css' | relative_url }}">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%231d2021'/><rect x='4' y='3' width='2.2' height='10' fill='%23fe8019'/><rect x='8' y='6' width='4.5' height='2' fill='%23b8bb26'/><rect x='8' y='10' width='4.5' height='2' fill='%2383a598'/></svg>">
 </head>
