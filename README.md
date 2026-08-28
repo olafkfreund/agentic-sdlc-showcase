@@ -13,8 +13,8 @@ context, the skills, the policy, the gates and the evidence do not move.
 
 ```
   Substitution Test    12/12  — portable
-  Deterministic gates  10/10  — each proven to refuse, not just to pass
-  Evals                23/23  — configuration regression, non-interactive
+  Deterministic gates  12/12  — each proven to refuse, not just to pass
+  Evals                24/24  — configuration regression, non-interactive
 ```
 
 > **Demo data.** The evidence records, attestations and change IDs here are produced by
@@ -29,7 +29,7 @@ context, the skills, the policy, the gates and the evidence do not move.
 python -m venv .venv && .venv/bin/pip install -e '.[dev]'
 make build test lint gates     # the closed loop plus the control layer
 make substitution              # Appendix C, scored from the repository
-make eval                      # 23 configuration regression cases
+make eval                      # 24 configuration regression cases
 make negative                  # break each protected thing; watch every gate refuse
 ```
 
@@ -67,7 +67,7 @@ week "the single highest-value output of this whole programme".
 make negative
 ```
 
-Ten deliberate violations — a float on a monetary field, a personal field in an error
+Twelve deliberate violations — a float on a monetary field, a personal field in an error
 message, an unaudited `POST`, an edit to a frozen path, an R3 change claiming A3
 autonomy, code with no plan claiming it. Every one refused, by code, with the control id
 and the reason.

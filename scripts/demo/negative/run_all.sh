@@ -71,7 +71,7 @@ git reset -q >/dev/null 2>&1; restore
 
 # SOD-01 — a CODEOWNERS rule guarding a path that no longer exists.
 # GitHub silently ignores it, so the rule reads as configured and requires nobody.
-echo "/does/not/exist/  @Olaf-KrasickiFreund_syne" >> CODEOWNERS
+echo "/does/not/exist/  @olafkfreund" >> CODEOWNERS
 expect_red "SOD-01  CODEOWNERS rule guarding a missing path" "$PY" scripts/check_codeowners.py
 
 # SOD-01 — the control layer left to the catch-all rule

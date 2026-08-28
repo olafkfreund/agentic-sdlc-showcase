@@ -24,26 +24,26 @@
 # that do not exist.
 # ---------------------------------------------------------------------------------
 
-*                           @Olaf-KrasickiFreund_syne
+*                           @olafkfreund
 
 # The control layer. A change here changes what the organisation can prove.
-/policy/                    @Olaf-KrasickiFreund_syne
-/.github/workflows/         @Olaf-KrasickiFreund_syne
-/.github/actions/           @Olaf-KrasickiFreund_syne
-/scripts/                   @Olaf-KrasickiFreund_syne
-/REVIEW.md                  @Olaf-KrasickiFreund_syne
+/policy/                    @olafkfreund
+/.github/workflows/         @olafkfreund
+/.github/actions/           @olafkfreund
+/scripts/                   @olafkfreund
+/REVIEW.md                  @olafkfreund
 
 # The context plane. A change here changes how every agent behaves in this repository.
-/AGENTS.md                  @Olaf-KrasickiFreund_syne
-/.agent/skills/             @Olaf-KrasickiFreund_syne
-/.agent/routes.yaml         @Olaf-KrasickiFreund_syne
-/.agent/mcp-allowlist.yaml  @Olaf-KrasickiFreund_syne
-/.agent/evals/              @Olaf-KrasickiFreund_syne
+/AGENTS.md                  @olafkfreund
+/.agent/skills/             @olafkfreund
+/.agent/routes.yaml         @olafkfreund
+/.agent/mcp-allowlist.yaml  @olafkfreund
+/.agent/evals/              @olafkfreund
 
 # The artifact chain. Acceptance of an intent is recorded as the product owner's merge.
-/intent/                    @Olaf-KrasickiFreund_syne
-/specs/                     @Olaf-KrasickiFreund_syne
-/plans/                     @Olaf-KrasickiFreund_syne
+/intent/                    @olafkfreund
+/specs/                     @olafkfreund
+/plans/                     @olafkfreund
 
 # Frozen. Listed so a change here is impossible to merge quietly.
-/service/app/v1_legacy/     @Olaf-KrasickiFreund_syne
+/service/app/v1_legacy/     @olafkfreund

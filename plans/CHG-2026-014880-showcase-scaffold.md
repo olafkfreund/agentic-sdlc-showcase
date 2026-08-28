@@ -46,7 +46,7 @@ The repository is built through its own chain: this plan claims every path, so
 2. Policy YAML and the seven gates. → verify: each gate refuses a deliberately broken
    change and passes once reverted.
 3. Skills, routes, MCP allowlist, OTel collector. → verify: Substitution Test rises.
-4. Eval suite. → verify: 23 cases, `--mode static` at or above 90%.
+4. Eval suite. → verify: 24 cases, `--mode static` at or above 90%.
 5. Stage 6 detection and its unit tests. → verify: `pytest scripts/tests/` green,
    including the drift case that no threshold would catch.
 6. Seeded artifact chains. → verify: `check_artifact_header.py` passes, chain complete.
