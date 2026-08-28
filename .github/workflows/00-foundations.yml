@@ -50,6 +50,31 @@ jobs:
           sys.exit(1 if errors else 0)
           PY
 
+      # A workflow that hands work to the agent does it by opening a labelled issue,
+      # and `gh issue create` fails outright on a label the repository does not have.
+      # That failure surfaces at 2am in Stage 6, on a fresh fork, in the one path
+      # nobody rehearses — so the labels are checked here, at Stage 0, instead.
+      - name: Validate the labels the workflows hand to the agent
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import os, pathlib, re, subprocess, sys
+          referenced = set()
+          for wf in sorted(pathlib.Path(".github/workflows").glob("*.yml")):
+              for group in re.findall(r'--label "([^"]+)"', wf.read_text()):
+                  referenced.update(label.strip() for label in group.split(","))
+          have = set(subprocess.run(
+              ["gh", "label", "list", "--limit", "200", "--json", "name", "--jq", ".[].name"],
+              capture_output=True, text=True).stdout.split())
+          missing = sorted(referenced - have)
+          print(f"{len(referenced)} label(s) referenced by the workflows; missing: {missing or 'none'}")
+          if missing:
+              print("::error::create them before an agent stage needs them: "
+                    + " ".join(f"gh label create {m}" for m in missing))
+          sys.exit(1 if missing else 0)
+          PY
+
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: evidence-foundations, path: evidence/ }
