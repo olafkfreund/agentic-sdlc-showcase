@@ -89,7 +89,12 @@ jobs:
           python - <<'PY'
           import os, pathlib, re, subprocess, sys
           referenced = set()
+          # The detector holds the pattern it hunts for, so it cannot scan itself —
+          # the same reason scripts/substitution_test.py excludes its own filename.
+          SELF = "00-foundations.yml"
           for wf in sorted(pathlib.Path(".github/workflows").glob("*.yml")):
+              if wf.name == SELF:
+                  continue
               for group in re.findall(r'--label "([^"]+)"', wf.read_text()):
                   referenced.update(label.strip() for label in group.split(","))
           have = set(subprocess.run(

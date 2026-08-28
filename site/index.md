@@ -76,6 +76,12 @@ header, and every gate emits a record keyed to a control id.
 
 <div class="cards">
   <div class="card">
+    <span class="tag">Start here</span>
+    <h3><a href="{{ '/story/' | relative_url }}">One change, end to end</a></h3>
+    <p>A user story from the sentence someone said in a meeting to a signed artifact —
+    and what stays identical when you change vendor.</p>
+  </div>
+  <div class="card">
     <span class="tag">Stage by stage</span>
     <h3><a href="{{ '/stages/' | relative_url }}">The seven stages</a></h3>
     <p>What each stage's control point is, and which workflow enforces it.</p>

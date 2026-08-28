@@ -44,6 +44,30 @@ no agent. That separation is the design working, not a workaround.
 *To enable elsewhere:* Settings → Copilot → Coding agent (repository or organisation),
 and Copilot code review under Copilot → Policies.
 
+### The default token cannot invoke an agent
+
+Established by running it, not by reading documentation. With the workflow's built-in
+`GITHUB_TOKEN`, `suggestedActors(capabilities: [CAN_BE_ASSIGNED])` returns **no Bot at
+all** — the same query returns `copilot-swe-agent` under a personal access token with the
+`copilot` scope. The assignment therefore resolves to nothing, silently.
+
+This is the third variation on one theme in this repository, and worth naming as a class:
+**an API that answers a permission question by returning an empty list rather than an
+error.** The CODEOWNERS validator does it, `requested_reviewers` does it, and so does
+this. Each one produces a step that succeeds while nothing happened.
+
+`.github/actions/agent-task` therefore takes an optional `agent-token`, and Stages 2 and 6
+pass `secrets.AGENT_PAT`. Where the secret is absent it falls back to `GITHUB_TOKEN`, the
+assignment finds no bot, and the step **says so** — a plain step summary naming both
+causes, plus a `::warning::`. It never reports success.
+
+```bash
+gh secret set AGENT_PAT --repo <owner>/<repo>   # a PAT with the `copilot` scope
+```
+
+Without it, Stage 2 and Stage 6 open the labelled issue and a human picks it up. The
+chain, the gates and the evidence are unaffected.
+
 ### Copilot code review
 
 `POST /pulls/{n}/requested_reviewers` with `copilot-pull-request-reviewer[bot]` returns

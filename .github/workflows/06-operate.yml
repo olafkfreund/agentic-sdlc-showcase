@@ -90,6 +90,9 @@ jobs:
           binding: stage6_diagnose
           autonomy-tier: A0
           github-token: ${{ github.token }}
+          # GITHUB_TOKEN cannot invoke an agent identity; a PAT with the `copilot`
+          # scope can. Absent, the step says no agent took the task.
+          agent-token: ${{ secrets.AGENT_PAT }}
           gateway-enabled: ${{ vars.AI_GATEWAY_ENABLED }}
           gateway-endpoint: ${{ vars.AI_GATEWAY_ENDPOINT }}
           gateway-token: ${{ secrets.AI_GATEWAY_TOKEN }}
@@ -196,6 +199,9 @@ jobs:
           binding: stage6_scan
           autonomy-tier: A0
           github-token: ${{ github.token }}
+          # GITHUB_TOKEN cannot invoke an agent identity; a PAT with the `copilot`
+          # scope can. Absent, the step says no agent took the task.
+          agent-token: ${{ secrets.AGENT_PAT }}
           gateway-enabled: ${{ vars.AI_GATEWAY_ENABLED }}
           gateway-endpoint: ${{ vars.AI_GATEWAY_ENDPOINT }}
           gateway-token: ${{ secrets.AI_GATEWAY_TOKEN }}

@@ -16,8 +16,18 @@ inputs:
     description: What the agent is permitted to do here (policy/autonomy-matrix.yaml).
     required: true
   github-token:
-    description: Token with issues:write on this repository.
+    description: Token with issues:write on this repository. Used to open and read the task.
     required: true
+  agent-token:
+    description: >
+      Token used to *invoke* an agent identity. The default `GITHUB_TOKEN` cannot:
+      `suggestedActors(capabilities:[CAN_BE_ASSIGNED])` returns no Bot for it, so the
+      assignment silently resolves to nothing. A PAT with the `copilot` scope can.
+      Falls back to `github-token`, in which case the step reports plainly that no agent
+      took the task rather than pretending one did.
+    required: false
+    default: ""
+
   gateway-enabled:
     description: >
       "true" where the model gateway is configured. A hosted runtime takes its
@@ -93,7 +103,7 @@ runs:
       if: steps.select.outputs.invocation == 'assign'
       shell: bash
       env:
-        GH_TOKEN: ${{ inputs.github-token }}
+        GH_TOKEN: ${{ inputs.agent-token || inputs.github-token }}
         ISSUE: ${{ inputs.issue-number }}
         REPO: ${{ github.repository }}
       run: |
@@ -118,8 +128,15 @@ runs:
             echo "The deterministic gates are unaffected — they are the control layer and depend"
             echo "on no agent (playbook §5.4). A human takes this stage instead."
             echo ""
-            echo "To enable: Settings > Copilot > Coding agent. To use a different runtime:"
-            echo "\`make swap RUNTIME=claude\` (or \`gemini\`, \`codex\`)."
+            echo "Two causes, in order of likelihood:"
+            echo ""
+            echo "1. **The token cannot invoke an agent identity.** The default \`GITHUB_TOKEN\`"
+            echo "   sees no assignable Bot at all, so the assignment resolves to nothing."
+            echo "   Set an \`AGENT_PAT\` secret — a token with the \`copilot\` scope — and"
+            echo "   this step uses it instead."
+            echo "2. The coding agent is off: Settings > Copilot > Coding agent."
+            echo ""
+            echo "To use a different runtime instead: \`make swap RUNTIME=claude\`."
           } >> "$GITHUB_STEP_SUMMARY"
           echo "::warning::$ACTOR is not assignable here; issue #${ISSUE} awaits a human."
           echo "invoked=false" >> "$GITHUB_OUTPUT"
