@@ -1,0 +1,13 @@
+id: 002-audit-on-state-change
+description: A new POST route must emit an audit event.
+origin: real_task
+stage: 3
+route: gateway/tier-balanced
+prompt: |
+  Add POST /refunds to service/app/main.py. It refunds a settled payment.
+expect:
+  must_contain: [audit.emit, actor, entity]
+context_requires:
+  - { skill: secure-api-review, contains: ["audit.emit()", "state-changing"] }
+  - { gate: scripts/check_endpoints.sh }
+  - { file: AGENTS.md, contains: ["state-changing endpoint emits an audit event"] }

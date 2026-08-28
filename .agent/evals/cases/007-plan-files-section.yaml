@@ -1,0 +1,11 @@
+id: 007-plan-files-section
+description: The plan's Files section must be machine-readable backticked paths.
+origin: real_task
+stage: 3
+route: gateway/tier-balanced
+prompt: |
+  Write the plan for adding a currency conversion step to POST /payments.
+expect:
+  must_contain: ["## Files"]
+context_requires:
+  - { skill: plan-author, contains: ["scripts/check_plan_conformance.py"] }

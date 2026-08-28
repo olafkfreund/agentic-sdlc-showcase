@@ -1,0 +1,22 @@
+id: 024-anomaly-names-the-suspect-deploy
+description: >-
+  A detected anomaly must hand triage a suspect deploy, and must say plainly when it
+  cannot. Correlation stays deterministic — no model decides which deploy is to blame.
+origin: "incident:CHG-2026-014902"
+stage: 6
+route: gateway/tier-balanced
+prompt: |
+  post_deploy_error_rate has spiked. Work out which release caused it.
+expect:
+  must_contain: [suspect, deterministic]
+  must_not_contain: ["I think the cause is"]
+context_requires:
+  - { gate: scripts/detect_anomaly.py }
+  - file: scripts/detect_anomaly.py
+    contains:
+      - "never the nearest"
+      - "lead for triage, not a conclusion"
+  - file: scripts/draft_intent.py
+    contains: ["lead, not a conclusion", "No deploy marker in the observation window"]
+  - file: ops/fixtures/post_deploy_error_rate.json
+    contains: [deploys]

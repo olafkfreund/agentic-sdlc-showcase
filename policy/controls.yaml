@@ -1,0 +1,70 @@
+# Playbook §8.4 — control objective mapping.
+# Every objective names the deterministic gate that enforces it and the evidence it emits.
+# scripts/query_evidence.py walks this file to answer supervisory questions.
+controls:
+  - id: CHG-04
+    objective: Authorised change only
+    agentic_implementation: Change record gate in pipeline; artifact header carries change_id
+    gate: scripts/check_artifact_header.py
+    evidence: evidence/artifact_header.json
+    maps_to: [DORA Ch. II, SOX ITGC]
+
+  - id: SOD-01
+    objective: Segregation of duties
+    agentic_implementation: Agent machine identity cannot approve; CODEOWNERS enforced by ruleset
+    gate: scripts/check_codeowners.py + .github/workflows/03-gates.yml + branch ruleset
+    evidence: evidence/codeowners.json, evidence/segregation_of_duties.json
+    note: >-
+      An owner that does not resolve is silently ignored by GitHub, leaving a rule
+      that reads as configured and requires nobody. The gate calls GitHub's own
+      CODEOWNERS validator against the ref under review.
+    maps_to: [DORA Ch. II, SOX ITGC]
+
+  - id: SEC-API-01
+    objective: Secure development — API security standard
+    agentic_implementation: secure-api-review skill during authoring + deterministic gate at PR
+    gate: scripts/check_endpoints.sh
+    evidence: evidence/endpoints.json
+    maps_to: [NIST SSDF, DORA Ch. II]
+
+  - id: DP-11
+    objective: Personal data never leaves the trust boundary in logs
+    agentic_implementation: Classification map applied at authoring; gate at PR; test in CI
+    gate: scripts/check_pii.py
+    evidence: evidence/pii.json
+    maps_to: [GDPR Art. 5, DORA Ch. II]
+
+  - id: FIN-02
+    objective: Monetary correctness — fixed precision only
+    agentic_implementation: AGENTS.md convention + gate at PR
+    gate: scripts/check_money.py
+    evidence: evidence/money.json
+    maps_to: [SOX ITGC]
+
+  - id: TRC-01
+    objective: Traceability of decisions
+    agentic_implementation: Artifact chain with headers; plan-to-diff conformance
+    gate: scripts/check_plan_conformance.py
+    evidence: evidence/plan_conformance.json
+    maps_to: [EU AI Act traceability, DORA]
+
+  - id: HUM-14
+    objective: Human oversight
+    agentic_implementation: Autonomy matrix enforced; named approver on the production environment
+    gate: scripts/check_autonomy.py + GitHub environment required reviewers
+    evidence: evidence/autonomy.json
+    maps_to: [EU AI Act Art. 14]
+
+  - id: TPR-05
+    objective: Third-party ICT risk / portability
+    agentic_implementation: Gateway abstraction; routes not model names; portable formats
+    gate: scripts/substitution_test.py
+    evidence: evidence/substitution_test.json
+    maps_to: [DORA Ch. V]
+
+  - id: FRZ-01
+    objective: Change confined to supported components
+    agentic_implementation: Frozen path list enforced at PR
+    gate: scripts/check_frozen_paths.py
+    evidence: evidence/frozen_paths.json
+    maps_to: [DORA Ch. II]

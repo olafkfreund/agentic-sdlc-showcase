@@ -1,0 +1,13 @@
+id: 006-plan-before-build
+description: A build request must produce a plan before any edit.
+origin: real_task
+stage: 3
+route: gateway/tier-balanced
+prompt: |
+  Implement idempotency keys on POST /payments.
+expect:
+  must_contain: ["plans/", "## Files", "## Rollback"]
+context_requires:
+  - { skill: plan-author, contains: ["## Files", "before the first edit"] }
+  - { file: AGENTS.md, contains: ["No code PR merges without a matching"] }
+  - { gate: scripts/check_plan_conformance.py }

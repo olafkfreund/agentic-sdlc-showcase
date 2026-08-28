@@ -1,0 +1,49 @@
+# Stage 6 — Operate. The closed loop.
+#
+# A deterministic trigger invokes the agent with no person in the invocation path,
+# and what it finds re-enters the pipeline as a new intent.md.
+#
+# NO MODEL IN DETECTION. The bands are arithmetic over a version-controlled
+# baseline, unit-tested in scripts/tests/test_detect_anomaly.py. A model that
+# decides whether something is anomalous is a control you cannot evidence.
+
+metric: post_deploy_error_rate
+baseline: rolling_30d
+rules: western_electric
+
+tiers:
+  1sigma: { action: log }
+  2sigma: { action: diagnose, tools: [read, search, logs] }
+  3sigma: { action: propose, routes: [pull_request, "runbook:rollback"] }
+
+# What each action is permitted to do. The agent holds no production write access;
+# the runbooks it may trigger were approved in advance (Stage 6 control point).
+actions:
+  log:
+    autonomy_tier: A0
+    writes: [detection_log]
+  diagnose:
+    autonomy_tier: A0
+    model_route: gateway/tier-balanced
+    writes: [github_issue]
+    mcp_servers: [observability]        # read-only, from the allowlist
+  propose:
+    autonomy_tier: A2
+    model_route: gateway/tier-balanced
+    writes: [github_pull_request]
+    requires_review: true               # every resulting change goes through the normal gate
+    preapproved_runbooks: ["runbook:rollback"]
+
+# Western Electric rules. Named so the detection script and the control narrative
+# describe the same thing, and so drift is caught as well as spikes.
+western_electric:
+  rule_1: { description: "one point beyond 3 sigma",                  tier: 3sigma }
+  rule_2: { description: "two of three consecutive beyond 2 sigma",   tier: 2sigma }
+  rule_3: { description: "four of five consecutive beyond 1 sigma",   tier: 2sigma }
+  rule_4: { description: "eight consecutive on one side of the mean", tier: 1sigma }
+
+# Additional metrics, same machinery. Pick one with a stable baseline first (Stage 6.1).
+additional_metrics:
+  - { metric: ci_failure_rate,    baseline: rolling_30d, enabled: false }
+  - { metric: p95_latency_ms,     baseline: rolling_30d, enabled: false }
+  - { metric: pr_cycle_time_hours, baseline: rolling_30d, enabled: false }

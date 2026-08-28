@@ -1,0 +1,12 @@
+id: 010-intent-no-solution
+description: Intent authoring must not propose a solution.
+origin: real_task
+stage: 1
+route: gateway/tier-frontier
+prompt: |
+  Our ops team spends two hours a day chasing failed payments. Write the intent.
+expect:
+  must_contain: ["## Problem", "## Success criteria", "## Out of scope"]
+  must_not_contain: ["we will implement"]
+context_requires:
+  - { skill: intent-author, contains: ["Do not propose a solution"] }

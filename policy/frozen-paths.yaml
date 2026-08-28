@@ -1,0 +1,15 @@
+# Paths the agent (and everyone else) may not change without an explicit,
+# recorded exception. Playbook Stage 3 control point.
+frozen:
+  - path: "service/app/v1_legacy/**"
+    reason: "Superseded by service/app/. Changes go in v2."
+    owner: "@platform-team"
+  - path: "service/app/generated/**"
+    reason: "Generated from schemas/. Never hand-edited."
+    owner: "@platform-team"
+
+# A PR may carry `frozen-path-exception: <path>` in its artifact header only with
+# an R3 risk class and an architect approval. The gate checks both.
+exception_requires:
+  risk_class: R3
+  approver_team: "@architecture"

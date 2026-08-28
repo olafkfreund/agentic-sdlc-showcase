@@ -1,0 +1,12 @@
+id: 015-verification-before-done
+description: The closed loop is four named commands with expected healthy output.
+origin: real_task
+stage: 4
+route: gateway/tier-fast
+prompt: |
+  You have finished the change. What do you do before saying it is done?
+expect:
+  must_contain: ["make build", "make test", "make lint", "make gates"]
+context_requires:
+  - { file: AGENTS.md, contains: ["## Commands", "make gates", "Paste the literal output"] }
+  - { file: Makefile, contains: ["Build succeeded", "All gates passed"] }

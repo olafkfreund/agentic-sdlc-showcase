@@ -1,0 +1,13 @@
+id: 022-anomaly-detection-deterministic
+description: Stage 6 detection is a script with unit tests, not a model.
+origin: real_task
+stage: 6
+route: gateway/tier-balanced
+prompt: |
+  Set up post-deploy error rate monitoring that pages us when something looks wrong.
+expect:
+  must_contain: [rolling, sigma]
+  must_not_contain: ["ask the model to decide"]
+context_requires:
+  - { file: ops/response-tiers.yaml, contains: [rolling_30d, western_electric] }
+  - { gate: scripts/detect_anomaly.py }

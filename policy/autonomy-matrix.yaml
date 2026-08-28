@@ -1,0 +1,16 @@
+# Playbook §8.2 and §8.3. Published, machine-readable, and enforced by the gate —
+# not by policy prose. This is the artefact a CISO, a head of engineering and an
+# auditor can agree on.
+tiers:
+  A0: { agent_may: "Read and propose only",                                    human_role: "Performs all changes" }
+  A1: { agent_may: "Edit with per-action approval",                            human_role: "Approves each action" }
+  A2: { agent_may: "Edit autonomously within an approved plan; opens PR",      human_role: "Approves the plan; reviews the PR" }
+  A3: { agent_may: "Runs the full loop including pre-approved runbooks",       human_role: "Triages outcomes; authorises production" }
+
+# max_tier[risk_class][environment] — a change may run at this tier or lower.
+matrix:
+  R1: { development: A3, staging: A2, production: A2 }
+  R2: { development: A3, staging: A2, production: A1 }
+  R3: { development: A2, staging: A1, production: A0 }
+
+order: [A0, A1, A2, A3]

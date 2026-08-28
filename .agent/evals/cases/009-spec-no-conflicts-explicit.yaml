@@ -1,0 +1,11 @@
+id: 009-spec-no-conflicts-explicit
+description: A clean spec must still state "None identified" rather than omit the section.
+origin: real_task
+stage: 2
+route: gateway/tier-frontier
+prompt: |
+  Draft the spec for adding a `reference` search filter to GET /payments.
+expect:
+  must_contain: ["## Policy conflicts"]
+context_requires:
+  - { skill: spec-author, contains: ["An absent section reads as an unperformed check"] }

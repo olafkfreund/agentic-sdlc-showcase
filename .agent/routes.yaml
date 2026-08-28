@@ -1,0 +1,54 @@
+# Model access plane (playbook §5.1) — ROUTES, never raw model names.
+#
+# Substitution Test #5: "Are model choices expressed as routes rather than
+# hard-coded model names?" Nothing in this repository names a model. Changing
+# which model serves a route is a change to this file, gated on the eval suite
+# (.github/workflows/04-test.yml), and nothing else moves.
+#
+# Non-negotiable (§5.1): no engineer laptop and no CI runner holds a direct
+# provider API key. Provider credentials terminate at the gateway.
+
+gateway:
+  endpoint: https://ai-gateway.internal.example.com/v1
+  auth: workload_identity        # short-lived, per-job; never a static key
+  telemetry: otlp://collector.internal.example.com:4317
+
+routes:
+  gateway/tier-frontier:
+    use_for: [architecture, spec-authoring, security-review, policy-conflict-analysis]
+    residency: eu-west
+    max_cost_per_1k_requests_gbp: 40
+    fallback: gateway/tier-balanced
+
+  gateway/tier-balanced:
+    use_for: [implementation, plan-authoring, code-review, release-notes]
+    residency: eu-west
+    max_cost_per_1k_requests_gbp: 12
+    fallback: gateway/tier-fast
+
+  gateway/tier-fast:
+    use_for: [lint-remediation, log-triage, classification, test-naming]
+    residency: eu-west
+    max_cost_per_1k_requests_gbp: 3
+    fallback: null
+
+  gateway/tier-sovereign:
+    use_for: [personal-data-processing, client-confidential]
+    residency: uk-south
+    deployment: single-tenant
+    max_cost_per_1k_requests_gbp: 60
+    fallback: null                # fails closed; never spills to a shared tenant
+
+# Which route each pipeline step uses. Read by the workflows.
+bindings:
+  stage2_spec_draft:    gateway/tier-frontier
+  stage3_implement:     gateway/tier-balanced
+  stage5_review:        gateway/tier-balanced
+  stage6_diagnose:      gateway/tier-balanced
+  stage6_scan:          gateway/tier-frontier
+
+# Quarterly route review is gated on the eval suite (playbook §10.2, "beyond 90 days").
+review:
+  cadence: quarterly
+  gate: .agent/evals/run.py
+  min_pass_rate: 0.90

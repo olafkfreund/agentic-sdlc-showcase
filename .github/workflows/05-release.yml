@@ -1,0 +1,94 @@
+# Stage 5 — Deploy, release half.
+#
+# Autonomy tiered by environment (Stage 5.6): the agent deploys freely in
+# development, within a policy envelope in staging, and in production it prepares
+# the release while a named release manager authorises. The gate enforces that —
+# it is a GitHub environment with required reviewers, not a paragraph in a runbook.
+name: "Stage 5 — Release"
+
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and attest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write        # OIDC identity for signing. Without it, unverifiable.
+      attestations: write
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: ./.github/actions/setup
+
+      - run: make build test lint gates
+
+      - name: Bundle the gate evidence for the attestation
+        run: python scripts/bundle_evidence.py
+
+      - name: Package
+        run: |
+          python -m pip install -q build
+          python -m build --wheel --outdir dist/
+
+      - id: digest
+        run: |
+          WHEEL=$(ls dist/*.whl | head -1)
+          echo "digest=sha256:$(sha256sum "$WHEEL" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      # Evidence plane, pipeline attestation stream (§5.5). A signed in-toto
+      # statement that the build ran and what it produced. This is where DORA's
+      # "prove the control operated continuously" is actually satisfied — and it
+      # comes from your own CI, not a vendor's hosted service (Appendix C #12).
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*.whl
+
+      # The gate results travel with the artifact, so "which controls ran on the
+      # thing that is in production" is answerable from the artifact alone.
+      - name: Attest the gate results
+        uses: actions/attest@v2
+        with:
+          subject-path: dist/*.whl
+          predicate-type: https://synechron.com/attestations/agentic-sdlc/v1
+          predicate-path: evidence/bundle.json
+
+
+      - uses: actions/upload-artifact@v4
+        with: { name: dist, path: dist/ }
+
+  staging:
+    name: Deploy to staging
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging          # policy envelope; no human in the path
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: dist, path: dist/ }
+      - run: echo "Deployed ${{ needs.build.outputs.digest }} to staging."
+
+  production:
+    name: Deploy to production
+    needs: [build, staging]
+    runs-on: ubuntu-latest
+    # Required reviewers on this environment ARE the release authorisation gate.
+    # Configure them in Settings > Environments; the agent identity is excluded,
+    # so the identity that authored the change cannot authorise its release.
+    environment:
+      name: production
+      url: https://payments.example.com
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: dist, path: dist/ }
+      - name: Record the release
+        run: |
+          echo "Digest:   ${{ needs.build.outputs.digest }}"
+          echo "Approved: ${{ github.actor }}"
+          echo "Rollback: gh workflow run 05-release.yml -f digest=<previous>"

@@ -1,0 +1,49 @@
+# Separation of duties, structurally (playbook Stage 5 control point).
+#
+# The identity that authored a change cannot approve it. Branch protection requires
+# a code owner's approval; the agent's machine identity is in no team here, so it can
+# open a pull request and can never approve one.
+#
+# ---------------------------------------------------------------------------------
+# ON ADOPTION, replace every owner below with your real teams. The commented lines
+# show the intended shape — four distinct accountabilities, not one catch-all:
+#
+#   *                           @your-org/platform-team
+#   /policy/                    @your-org/platform-team @your-org/second-line
+#   /intent/                    @your-org/product-owners
+#   /specs/                     @your-org/product-owners @your-org/architecture
+#   /service/app/v1_legacy/     @your-org/architecture
+#
+# Second line on /policy/ is the one people skip. It is also the one that makes the
+# control mapping in policy/controls.yaml something second line has agreed to rather
+# than something engineering asserted.
+#
+# An owner that does not resolve is silently ignored by GitHub: the rule looks
+# configured and requires nobody. scripts/check_codeowners.py fails the build on that,
+# which is how this file came to be pointing at a real identity instead of four teams
+# that do not exist.
+# ---------------------------------------------------------------------------------
+
+*                           @Olaf-KrasickiFreund_syne
+
+# The control layer. A change here changes what the organisation can prove.
+/policy/                    @Olaf-KrasickiFreund_syne
+/.github/workflows/         @Olaf-KrasickiFreund_syne
+/.github/actions/           @Olaf-KrasickiFreund_syne
+/scripts/                   @Olaf-KrasickiFreund_syne
+/REVIEW.md                  @Olaf-KrasickiFreund_syne
+
+# The context plane. A change here changes how every agent behaves in this repository.
+/AGENTS.md                  @Olaf-KrasickiFreund_syne
+/.agent/skills/             @Olaf-KrasickiFreund_syne
+/.agent/routes.yaml         @Olaf-KrasickiFreund_syne
+/.agent/mcp-allowlist.yaml  @Olaf-KrasickiFreund_syne
+/.agent/evals/              @Olaf-KrasickiFreund_syne
+
+# The artifact chain. Acceptance of an intent is recorded as the product owner's merge.
+/intent/                    @Olaf-KrasickiFreund_syne
+/specs/                     @Olaf-KrasickiFreund_syne
+/plans/                     @Olaf-KrasickiFreund_syne
+
+# Frozen. Listed so a change here is impossible to merge quietly.
+/service/app/v1_legacy/     @Olaf-KrasickiFreund_syne

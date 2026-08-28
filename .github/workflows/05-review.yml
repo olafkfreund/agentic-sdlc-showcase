@@ -1,0 +1,80 @@
+# Stage 5 — Deploy, review half. Agent review on every PR, identical for all of them.
+#
+# Findings inform; humans decide. Branch protection still requires a code owner's
+# approval, and where we gate, we gate on the machine-readable severity tally and
+# never on the narrative.
+name: "Stage 5 — Review"
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, synchronize]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  copilot-review:
+    name: Request Copilot review
+    if: "!github.event.pull_request.draft"
+    runs-on: ubuntu-latest
+    steps:
+      # The agent runtime is the replaceable component (§5.2). Copilot is invoked
+      # here and nowhere else; swapping it means editing this step, not the
+      # operating model. That is the Substitution Test in one file.
+      - name: Request review from the agent
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          gh api -X POST "repos/$REPO/pulls/$PR/requested_reviewers" \
+            -f "reviewers[]=copilot-pull-request-reviewer[bot]" >/dev/null 2>&1 || true
+
+          # The API returns 200 and silently ignores the reviewer when Copilot code
+          # review is not enabled for the org. A step that reports success while
+          # nothing happened is exactly the control theatre this playbook argues
+          # against, so verify the reviewer actually landed.
+          REVIEWERS=$(gh api "repos/$REPO/pulls/$PR/requested_reviewers" \
+                        --jq '[.users[].login] | join(",")')
+          echo "requested reviewers: ${REVIEWERS:-(none)}"
+
+          if echo "$REVIEWERS" | grep -qi copilot; then
+            echo "AGENT REVIEW: requested" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "## Agent review NOT requested"
+              echo
+              echo "Copilot code review is not enabled for this organisation, so no agent"
+              echo "review will appear on this pull request."
+              echo
+              echo "**The deterministic gates are unaffected** — they are the control layer"
+              echo "and they do not depend on any agent. Agent review is the fast, advisory"
+              echo "layer (playbook §5.4)."
+              echo
+              echo "To enable: Organisation settings > Copilot > Policies > Copilot code review."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Copilot code review is not enabled for this org; no agent review was requested."
+          fi
+
+  review-passes:
+    name: Review passes (REVIEW.md)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: ./.github/actions/setup
+
+      # Three passes, defined in REVIEW.md so they are identical for every PR and
+      # reviewable as a version-controlled artifact rather than a prompt someone typed.
+      - name: Tally findings by severity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: python scripts/review_tally.py --pr "$PR"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: evidence-review, path: evidence/ }

@@ -1,0 +1,62 @@
+{
+  "metric": "post_deploy_error_rate",
+  "note": "Seeded fixture so the Stage 6 demo is reproducible. In production this is an observability query through the read-only MCP server, which returns the deploy markers alongside the metric \u2014 the same shape, a different source.",
+  "history": [
+    0.013932,
+    0.010873,
+    0.011569,
+    0.014736,
+    0.012394,
+    0.008509,
+    0.013609,
+    0.011265,
+    0.012771,
+    0.006697,
+    0.011671,
+    0.014391,
+    0.006886,
+    0.009716,
+    0.013012,
+    0.011672,
+    0.013589,
+    0.011267,
+    0.010905,
+    0.011521,
+    0.009806,
+    0.013019,
+    0.011194,
+    0.010075,
+    0.015537,
+    0.011041,
+    0.010585,
+    0.008632,
+    0.015472,
+    0.012462
+  ],
+  "recent": [
+    0.009855,
+    0.012249,
+    0.011982,
+    0.010922,
+    0.013209,
+    0.011024,
+    0.012762,
+    0.012185,
+    0.009674,
+    0.0271
+  ],
+  "deploys": [
+    {
+      "index": 0,
+      "ref": "v2.6.0",
+      "sha": "a1c9f02",
+      "released_by": "release-manager"
+    },
+    {
+      "index": 9,
+      "ref": "v2.7.0",
+      "sha": "3f8b41d",
+      "released_by": "release-manager"
+    }
+  ]
+}

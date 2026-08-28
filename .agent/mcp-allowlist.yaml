@@ -1,0 +1,47 @@
+# Tool and data access (playbook §5.3). Platform-owned allowlist.
+#
+# An MCP server is executable code and a skill is executable instruction. Both are
+# being distributed at scale through public catalogues with documented security
+# problems (§8.5). Internal registry, code review, signing, provenance. No
+# sideloading from home directories.
+
+registry: https://mcp-registry.internal.example.com
+policy: deny_by_default
+
+allowed:
+  - name: github
+    source: registry/github@2.4.1
+    digest: "sha256:PLACEHOLDER-pinned-at-deploy"
+    scopes: [repo:read, repo:write, issues, pull_requests]
+    note: Write scope reaches branches only. No route to the default branch.
+
+  - name: servicenow
+    source: registry/servicenow-devops@1.8.0
+    digest: "sha256:PLACEHOLDER-pinned-at-deploy"
+    scopes: [change_request:read, change_request:write]
+    note: The ITSM is the system of record for change (§6.3). Agent writes the
+      outcome back in the same session that produced the artifact.
+
+  - name: observability
+    source: registry/otel-query@1.2.0
+    digest: "sha256:PLACEHOLDER-pinned-at-deploy"
+    scopes: [metrics:read, traces:read, logs:read]
+    note: Read only. Stage 6 diagnosis at 2 sigma uses this and nothing else.
+
+  - name: artifact-repository
+    source: registry/oci-registry@1.1.0
+    digest: "sha256:PLACEHOLDER-pinned-at-deploy"
+    scopes: [artifact:read]
+
+denied_explicitly:
+  - reason: No standing production credentials in any agent context (§Stage 0 control point)
+    servers: [production-database, secrets-manager, payment-processor-live]
+  - reason: Unvetted public catalogue
+    servers: ["*.smithery.ai", "*.mcp.run", "npx:*", "uvx:*"]
+
+skills:
+  registry: https://skills-registry.internal.example.com
+  policy: deny_by_default
+  local_paths_allowed: [".agent/skills"]
+  sideloading: forbidden          # no ~/.config, no ~/.claude, no home directory
+  requires: [code_review, signature, named_policy_owner]

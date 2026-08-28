@@ -1,0 +1,80 @@
+# Stages 3-5 — the deterministic control layer. Every PR, every time, identical.
+#
+# Principle 4: no model in the gate. Models diagnose, propose, draft and review
+# (see 05-review.yml). The decision to allow or block is made here, by code.
+name: "Gates"
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    name: Deterministic gates
+    runs-on: ubuntu-latest
+    env:
+      GATE_BASE_REF: origin/${{ github.base_ref || 'main' }}
+      TARGET_ENVIRONMENT: development
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: ./.github/actions/setup
+
+      # Each gate runs even if an earlier one failed: a reviewer wants every finding
+      # in one pass, not one per push.
+      - { name: "SOD-01  codeowners resolve", if: always(), run: python scripts/check_codeowners.py }
+      - { name: "CHG-04  artifact header",   if: always(), run: python scripts/check_artifact_header.py }
+      - { name: "HUM-14  autonomy matrix",   if: always(), run: python scripts/check_autonomy.py }
+      - { name: "TRC-01  plan conformance",  if: always(), run: python scripts/check_plan_conformance.py }
+      - { name: "FRZ-01  frozen paths",      if: always(), run: python scripts/check_frozen_paths.py }
+      - { name: "SEC-API-01  endpoints",     if: always(), run: bash scripts/check_endpoints.sh }
+      - { name: "DP-11  personal data",      if: always(), run: python scripts/check_pii.py }
+      - { name: "FIN-02  monetary types",    if: always(), run: python scripts/check_money.py }
+
+      - name: Evidence
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib, os
+          records = [json.loads(p.read_text()) for p in sorted(pathlib.Path("evidence").glob("*.json"))]
+          rows = "\n".join(
+              f"| {'PASS' if r['result']=='pass' else 'FAIL'} | `{r['control_id']}` | {r['gate']} | "
+              f"{len(r['findings'])} |" for r in records)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
+              fh.write("## Deterministic gates\n\n| | Control | Gate | Findings |\n|---|---|---|---|\n")
+              fh.write(rows + "\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: evidence-gates, path: evidence/ }
+
+  segregation-of-duties:
+    name: "SOD-01  author is not approver"
+    runs-on: ubuntu-latest
+    permissions: { contents: read, pull-requests: read }
+    steps:
+      # Structural, not procedural: the identity that authored the change cannot
+      # approve it. Branch protection enforces the approval; this records the
+      # evidence and catches a self-approval that a ruleset misconfiguration let through.
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Check approvals against authorship
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          gh pr view "$PR" --json reviews --jq '.reviews[]|select(.state=="APPROVED").author.login' > approvers.txt || true
+          python - <<'PY'
+          import os, pathlib, sys
+          sys.path.insert(0, "scripts"); import gate
+          author = os.environ["AUTHOR"]
+          approvers = [a for a in pathlib.Path("approvers.txt").read_text().split() if a]
+          findings = ([f"{author} approved their own pull request"] if author in approvers else [])
+          sys.exit(gate.report("SOD-01", "segregation_of_duties", not findings, findings,
+                               author=author, approvers=approvers,
+                               agent_authored=author.endswith("[bot]") or "copilot" in author.lower()))
+          PY

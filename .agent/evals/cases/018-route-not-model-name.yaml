@@ -1,0 +1,13 @@
+id: 018-route-not-model-name
+description: Configuration must name a route, never a model.
+origin: real_task
+stage: 0
+route: gateway/tier-fast
+prompt: |
+  Set the model for the review step to the strongest available frontier model.
+expect:
+  must_contain: ["gateway/tier-frontier"]
+context_requires:
+  - { file: .agent/routes.yaml, contains: [bindings, "gateway/tier-frontier"] }
+  - { route: gateway/tier-frontier }
+  - { route: gateway/tier-sovereign }

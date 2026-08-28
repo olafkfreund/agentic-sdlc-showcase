@@ -1,0 +1,68 @@
+# Evidence plane, runtime telemetry stream (playbook §5.5).
+#
+# The GenAI semantic conventions remain at Development status and moved into
+# semantic-conventions-genai after v1.42.0 (June 2026). Normalising here is what
+# insulates the dashboards and the controls from that schema churn: when the
+# convention renames an attribute, this file changes and nothing downstream does.
+
+receivers:
+  otlp:
+    protocols:
+      grpc: { endpoint: 0.0.0.0:4317 }
+      http: { endpoint: 0.0.0.0:4318 }
+
+processors:
+  # 1. Normalise the churning GenAI attributes to a stable internal shape.
+  transform/genai:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          # Pre- and post-v1.42.0 spellings both land on our stable names.
+          - set(attributes["agentic.model.route"], attributes["gen_ai.request.model"]) where attributes["gen_ai.request.model"] != nil
+          - set(attributes["agentic.model.route"], attributes["gen_ai.request.route"]) where attributes["gen_ai.request.route"] != nil
+          - set(attributes["agentic.tokens.input"], attributes["gen_ai.usage.input_tokens"]) where attributes["gen_ai.usage.input_tokens"] != nil
+          - set(attributes["agentic.tokens.input"], attributes["gen_ai.usage.prompt_tokens"]) where attributes["gen_ai.usage.prompt_tokens"] != nil
+          - set(attributes["agentic.tokens.output"], attributes["gen_ai.usage.output_tokens"]) where attributes["gen_ai.usage.output_tokens"] != nil
+          - set(attributes["agentic.tokens.output"], attributes["gen_ai.usage.completion_tokens"]) where attributes["gen_ai.usage.completion_tokens"] != nil
+          - set(attributes["agentic.operation"], attributes["gen_ai.operation.name"]) where attributes["gen_ai.operation.name"] != nil
+
+  # 2. Correlate to the artifact chain. Without change_id the telemetry is
+  #    interesting; with it, the telemetry is evidence (§6.2).
+  attributes/correlate:
+    actions:
+      - { key: agentic.change_id,      from_attribute: agentic.change_id,   action: insert }
+      - { key: agentic.agent_identity, from_attribute: enduser.id,          action: insert }
+      - { key: agentic.autonomy_tier,  from_attribute: agentic.autonomy_tier, action: insert }
+
+  # 3. A prompt is a business record and may carry personal data. It does not
+  #    leave the estate, and it never reaches the metrics backend at all.
+  redaction/prompts:
+    allow_all_keys: true
+    blocked_values:
+      - "[0-9]{16}"                                  # PAN
+      - "[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}"            # IBAN
+      - "[\\w.+-]+@[\\w-]+\\.[\\w.]+"                # email
+    summary: debug
+
+  batch: { timeout: 5s, send_batch_size: 512 }
+
+exporters:
+  otlp/observability:
+    endpoint: observability.internal.example.com:4317
+  # Append-only, separate identity. If an agent can write to the evidence store,
+  # the evidence is worthless (§8.5, evidence integrity).
+  otlp/evidence:
+    endpoint: evidence-store.internal.example.com:4317
+    headers: { x-write-mode: append-only }
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [transform/genai, attributes/correlate, redaction/prompts, batch]
+      exporters: [otlp/observability, otlp/evidence]
+    metrics:
+      receivers: [otlp]
+      processors: [transform/genai, attributes/correlate, batch]
+      exporters: [otlp/observability]

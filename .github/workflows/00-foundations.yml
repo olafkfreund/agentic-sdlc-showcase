@@ -1,0 +1,55 @@
+# Stage 0 — Foundations. The five planes, checked as configuration rather than asserted.
+name: "Stage 0 — Foundations"
+
+on:
+  push: { branches: [main] }
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"      # Monday morning: the score is a trend, not a one-off
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  substitution-test:
+    name: Substitution Test (Appendix C)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: ./.github/actions/setup
+
+      # Appendix C, scored by inspecting the repository rather than by self-assessment.
+      # "Any 'no' is a portability debt with a named owner and a date."
+      - name: Score the Substitution Test
+        run: python scripts/substitution_test.py
+
+      - name: Validate the context plane
+        run: |
+          python - <<'PY'
+          import pathlib, sys, yaml
+          errors = []
+          for skill in sorted(pathlib.Path(".agent/skills").glob("*/SKILL.md")):
+              text = skill.read_text()
+              if not text.startswith("---\n"):
+                  errors.append(f"{skill}: no frontmatter"); continue
+              meta = yaml.safe_load(text.split("---")[1])
+              for key in ("name", "description", "version", "policy_owner"):
+                  if key not in meta:
+                      errors.append(f"{skill}: frontmatter missing {key}")
+              if meta.get("name") != skill.parent.name:
+                  errors.append(f"{skill}: name {meta.get('name')!r} != directory")
+          for path in (".agent/routes.yaml", ".agent/mcp-allowlist.yaml",
+                       "policy/autonomy-matrix.yaml", "policy/risk-classes.yaml",
+                       "policy/controls.yaml", "policy/frozen-paths.yaml",
+                       "ops/response-tiers.yaml", "ops/otel-collector.yaml"):
+              try: yaml.safe_load(pathlib.Path(path).read_text())
+              except Exception as exc: errors.append(f"{path}: {exc}")
+          print("\n".join(errors) or "context plane valid")
+          sys.exit(1 if errors else 0)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: evidence-foundations, path: evidence/ }

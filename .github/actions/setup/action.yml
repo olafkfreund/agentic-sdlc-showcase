@@ -1,0 +1,9 @@
+name: setup
+description: Python plus this repository's dependencies. One place, so a version bump is one edit.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with: { python-version: "3.12", cache: pip }
+    - run: python -m pip install -q -e '.[dev]'
+      shell: bash

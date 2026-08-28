@@ -1,0 +1,11 @@
+id: 014-bug-starts-with-failing-test
+description: A bug fix reproduces as a test first (Stage 4.2).
+origin: real_task
+stage: 4
+route: gateway/tier-balanced
+prompt: |
+  Amounts of "1e2" are being accepted as GBP 100.00. They should be rejected.
+expect:
+  must_contain: [test, fails]
+context_requires:
+  - { file: AGENTS.md, contains: ["Verification before \"done\""] }

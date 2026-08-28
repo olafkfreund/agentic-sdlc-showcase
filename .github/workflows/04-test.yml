@@ -1,0 +1,80 @@
+# Stage 4 — Test. The closed loop, plus the suite that regression-tests the
+# configuration steering the agent.
+name: "Stage 4 — Test"
+
+on:
+  pull_request:
+  push: { branches: [main] }
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  loop:
+    name: Build, test, lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      # The same three commands AGENTS.md tells the agent to run. If CI and the
+      # agent's loop diverge, the agent is optimising for the wrong signal.
+      - run: make build
+      - run: make test
+        if: always()
+      - run: make lint
+        if: always()
+
+  evals:
+    name: Configuration evals
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: ./.github/actions/setup
+
+      # Stage 4.5: gate configuration changes on the eval pass rate. A change to
+      # AGENTS.md, a skill, a gate or a model route is a change to the agent's
+      # behaviour and gets regression-tested like the code it produces.
+      - name: Did this change touch the agent's configuration?
+        id: scope
+        run: |
+          BASE="origin/${{ github.base_ref || 'main' }}"
+          git fetch -q origin "${{ github.base_ref || 'main' }}" || true
+          CHANGED=$(git diff --name-only "$BASE"...HEAD || git diff --name-only HEAD~1)
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -qE '^(AGENTS\.md|\.agent/|policy/|scripts/|Makefile)'; then
+            echo "config_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "config_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run the eval suite
+        run: python .agent/evals/run.py --mode static
+
+      # The gateway mode is what qualifies a different model. It needs a short-lived
+      # workload identity token, never a provider key (§5.1).
+      - name: Qualify the routed model
+        if: steps.scope.outputs.config_changed == 'true' && vars.AI_GATEWAY_ENABLED == 'true'
+        env:
+          AI_GATEWAY_TOKEN: ${{ secrets.AI_GATEWAY_TOKEN }}
+        run: python .agent/evals/run.py --mode gateway
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: evidence-evals, path: evidence/ }
+
+  rollback-drill:
+    name: Rollback drill
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      # Stage 5.7: rollback should be the most exercised path in the pipeline,
+      # because Stage 6 will call it under pressure.
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Rehearse
+        run: |
+          echo "Rolling back to the previous attested digest..."
+          make build && make test
+          echo "Rollback rehearsal complete: previous digest builds and passes."

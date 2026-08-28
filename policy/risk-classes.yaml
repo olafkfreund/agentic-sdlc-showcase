@@ -1,0 +1,25 @@
+# Playbook §8.1 — change risk classes.
+# Machine-readable so the gate reads the same table the governance forum signed off.
+R1:
+  name: Routine
+  definition: Reversible, covered by tests, no data or auth surface
+  examples: [dependency patch, copy change, lint remediation, test addition]
+R2:
+  name: Standard
+  definition: Normal feature work within an existing pattern
+  examples: [new endpoint on an established pattern, UI feature, refactor within a service]
+R3:
+  name: Material
+  definition: Auth, payments, personal data, cross-boundary, schema, infrastructure
+  examples: [authentication change, schema migration, new external integration, IAM change]
+
+# Paths that force a minimum risk class regardless of what the header claims.
+# Stops a material change being self-declared as routine to dodge a gate.
+path_floors:
+  - { pattern: "service/app/money.py",        min_class: R3, reason: "monetary logic" }
+  - { pattern: "service/app/audit.py",        min_class: R3, reason: "audit and PII controls" }
+  - { pattern: "service/app/models.py",       min_class: R3, reason: "data classification map" }
+  - { pattern: "policy/**",                   min_class: R3, reason: "control layer" }
+  - { pattern: ".github/workflows/**",        min_class: R3, reason: "control layer" }
+  - { pattern: "infra/**",                    min_class: R3, reason: "infrastructure" }
+  - { pattern: "migrations/**",               min_class: R3, reason: "schema" }

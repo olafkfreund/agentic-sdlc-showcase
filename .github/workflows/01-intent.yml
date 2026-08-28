@@ -1,0 +1,38 @@
+# Stage 1 — Plan. Intent is captured once, by whoever had it, in their own words.
+name: "Stage 1 — Intent"
+
+on:
+  pull_request:
+    paths: ["intent/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate the intent
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: ./.github/actions/setup
+
+      # Contributors without version control experience commit through an MCP
+      # connector to the VCS and never touch git. The gate is the same for them.
+      - run: python scripts/check_artifact_header.py
+
+      - name: Required sections
+        run: |
+          python - <<'PY'
+          import pathlib, sys
+          sys.path.insert(0, "scripts"); import gate
+          need = ["## Problem", "## Who is affected", "## Success criteria",
+                  "## Out of scope", "## Constraints"]
+          findings = [f"{p.name}: missing {s}"
+                      for p in sorted(pathlib.Path("intent").glob("*.md"))
+                      for s in need if s not in p.read_text()]
+          sys.exit(gate.report("CHG-04", "intent_sections", not findings, findings,
+                               required=need))
+          PY
+      # Acceptance is recorded as the merge, by the product owner in CODEOWNERS.
+      # Nothing here approves anything; it only checks the shape.

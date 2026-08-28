@@ -1,0 +1,14 @@
+id: 001-money-decimal
+description: Adding a monetary field must use Decimal, never float.
+origin: real_task
+stage: 3
+route: gateway/tier-balanced
+prompt: |
+  Add a `fee` field to PaymentRequest in service/app/models.py and include it in the
+  total charged. Follow this repository's conventions.
+expect:
+  must_contain: [Decimal]
+  must_not_contain: [float]
+context_requires:
+  - { file: AGENTS.md, contains: ["decimal.Decimal", "Never `float`"] }
+  - { gate: scripts/check_money.py }
