@@ -360,6 +360,14 @@ questionnaire.
 **For the board:** you can change your mind. Which, given how fast this field is moving,
 is the only durable position available.
 
+## And how an organisation gets here
+
+This followed one change through a pipeline that already existed. The other half of the
+question is how an organisation arrives at that pipeline — which regulation forces which
+decision, in what order, and what you actually edit.
+
+**[Two organisations adopt this, ninety days, step by step →]({{ site.baseurl }}/adoption/)**
+
 <div class="disclaimer">
   <strong>Demo data.</strong> <code>CHG-2026-014882</code> and the evidence quoted here are
   produced by this repository's own pipeline against a synthetic payments service. They are

@@ -95,6 +95,12 @@ header, and every gate emits a record keyed to a control id.
     and what stays identical when you change vendor.</p>
   </div>
   <div class="card">
+    <span class="tag">90 days</span>
+    <h3><a href="{{ '/adoption/' | relative_url }}">Two organisations adopt this</a></h3>
+    <p>Step by step at a tier-1 bank and a growth-stage payments firm — and why everything
+    that differs between them lives in four YAML files.</p>
+  </div>
+  <div class="card">
     <span class="tag">16 seconds</span>
     <h3><a href="{{ '/screencast/' | relative_url }}">Watch it run</a></h3>
     <p>Two recordings of the real session — the control layer, and the same control

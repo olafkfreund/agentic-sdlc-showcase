@@ -36,6 +36,7 @@ exclude:
 nav:
   - { title: Overview,      url: / }
   - { title: One change,    url: /story/ }
+  - { title: Adoption,      url: /adoption/ }
   - { title: Watch it run,  url: /screencast/ }
   - { title: The stages,    url: /stages/ }
   - { title: The gates,     url: /gates/ }
