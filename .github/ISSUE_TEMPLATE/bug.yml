@@ -1,0 +1,41 @@
+name: Defect
+description: Something does not behave as the repository claims it does.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The most valuable report here is **a gate that passes on a change it should
+        refuse** — that is a defect in the argument, not only in the code.
+
+        `service/` is a synthetic fixture, not a production service. Reports treating it
+        as one (no TLS, no rate limiting, in-memory store) are out of scope; see
+        `SECURITY.md`.
+  - type: textarea
+    id: claim
+    attributes:
+      label: What the repository claims
+      description: Quote the README, a docstring, a gate or the site.
+    validations: { required: true }
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happens
+      description: Paste the literal output. Not a paraphrase of it.
+      render: shell
+    validations: { required: true }
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      placeholder: |
+        nix develop        # or: python -m venv .venv && .venv/bin/pip install -e '.[dev]'
+        just check
+      render: shell
+    validations: { required: true }
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "nix develop / venv · python --version · OS"

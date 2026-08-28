@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/olafkfreund/agentic-sdlc-showcase/security/advisories/new
+    about: Report privately. Please do not open a public issue for anything exploitable.
+  - name: How this works
+    url: https://olafkfreund.github.io/agentic-sdlc-showcase/story/
+    about: One change followed end to end, from a sentence in a meeting to a signed artifact.

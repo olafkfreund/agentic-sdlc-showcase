@@ -1,0 +1,49 @@
+name: Intent (Stage 1)
+description: Capture a problem in your own words. No solution.
+title: "[Intent] "
+labels: ["stage-1"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is Stage 1 of the pipeline this repository demonstrates. Intent is captured
+        **once, by whoever had it, in their own words**.
+
+        Please do not propose a solution here. An intent containing a solution has already
+        made the design decision — invisibly, before anyone with the authority to make it
+        has seen the problem. The spec comes next, and it is where solutions belong.
+
+        You do not need to know git or this codebase to file one of these.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is wrong or missing, and what does it cost today?
+    validations: { required: true }
+  - type: textarea
+    id: affected
+    attributes:
+      label: Who is affected
+      description: Which people or systems, and how badly.
+    validations: { required: true }
+  - type: textarea
+    id: success
+    attributes:
+      label: Success criteria
+      description: How will we know this is done? Observable, not aspirational.
+      placeholder: |
+        1.
+        2.
+    validations: { required: true }
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this deliberately does not cover. Naming it now prevents the argument later.
+    validations: { required: true }
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: What must hold. Regulatory, technical, organisational.
+    validations: { required: true }
