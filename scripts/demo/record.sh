@@ -73,23 +73,49 @@ print(f"  {len(seen)} chapter marker(s)")
 PY
 }
 
+# asciinema 2.x and 3.x take different flags for the same three things, and which
+# one you get depends on the channel your nixpkgs is pinned to. Detect rather than
+# assume: this script has to work on the presenter's machine, not only on mine.
+# Both are asked for asciicast v2, which is what the player embeds.
+asciinema_flags() {
+  local title="$1"
+  if asciinema --version 2>&1 | grep -qE '\b3\.'; then
+    printf '%s\n' --headless --format asciicast-v2 \
+      --window-size "${COLS}x${ROWS}" --idle-time-limit "$IDLE" \
+      --overwrite --title "$title"
+  else
+    printf '%s\n' --cols "$COLS" --rows "$ROWS" \
+      -i "$IDLE" --overwrite -t "$title" -q
+  fi
+}
+
 record() {
   local name="$1" title="$2" command="$3"
   local cast="$OUT/$name.cast"
+  # Record OUTSIDE the working tree, then move the finished cast in.
+  #
+  # Act 3 of the demo is `make negative`, which stages the tree with `git add -A` and
+  # then restores it with `git checkout -- .`. Recording in place means the in-progress
+  # cast gets staged and then overwritten by its own three-second-old copy while
+  # asciinema still holds the file open — the recording is silently truncated at the
+  # exact moment the most important act begins. Found by watching a cast stop mid-act-3.
+  local tmp
+  tmp="$(mktemp -t "asciicast-${name}-XXXXXX")"
   printf '\n  recording %s -> %s\n' "$name" "$cast"
-  # --headless: no TTY needed, so this runs the same from a terminal or from CI.
-  if asciinema rec "$cast" \
-      --format asciicast-v2 \
-      --headless \
-      --window-size "${COLS}x${ROWS}" \
-      --idle-time-limit "$IDLE" \
-      --overwrite \
-      --title "$title" \
-      --command "$command"; then
+  mapfile -t flags < <(asciinema_flags "$title")
+  # No TTY required either way, so this runs the same from a terminal or from CI.
+  if asciinema rec "$tmp" "${flags[@]}" -c "$command" </dev/null; then
     :
   else
     printf '  the recorded session exited non-zero — the cast is kept so you can see why\n'
   fi
+  if [ ! -s "$tmp" ]; then
+    printf '  no cast was produced; recording failed\n' >&2
+    rm -f "$tmp"
+    return 1
+  fi
+  mv "$tmp" "$cast"
+  chmod 644 "$cast"        # mktemp gives 600; the site has to serve this
   mark "$cast"
   printf '  %s  (%s, %ss)\n' "$cast" \
     "$(du -h "$cast" | cut -f1)" \

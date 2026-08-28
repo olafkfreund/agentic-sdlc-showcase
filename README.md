@@ -38,6 +38,10 @@ nix develop          # or: devenv shell, or: direnv allow
 just demo            # the whole thing, narrated, nine acts
 ```
 
+Prefer to watch rather than run? Both halves are recorded, and the recordings are of
+the real session: **[olafkfreund.github.io/agentic-sdlc-showcase/screencast/](https://olafkfreund.github.io/agentic-sdlc-showcase/screencast/)**.
+`just record` reproduces them.
+
 `just demo` exits non-zero if any act fails, which is what stops it rotting between
 engagements: the demonstration is a test, not a performance. `just demo --fast` drops the
 pauses; `just demo --live` adds the pipeline running on GitHub.

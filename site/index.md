@@ -82,6 +82,12 @@ header, and every gate emits a record keyed to a control id.
     and what stays identical when you change vendor.</p>
   </div>
   <div class="card">
+    <span class="tag">16 seconds</span>
+    <h3><a href="{{ '/screencast/' | relative_url }}">Watch it run</a></h3>
+    <p>Two recordings of the real session — the control layer, and the same control
+    layer running in CI. Nothing re-typed, simulated or spliced.</p>
+  </div>
+  <div class="card">
     <span class="tag">Stage by stage</span>
     <h3><a href="{{ '/stages/' | relative_url }}">The seven stages</a></h3>
     <p>What each stage's control point is, and which workflow enforces it.</p>
