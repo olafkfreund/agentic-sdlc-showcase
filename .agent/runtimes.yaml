@@ -18,7 +18,7 @@
 # about who you buy from; a model name pinned in your repository is a migration you have
 # not scheduled yet.
 
-selected: claude
+selected: copilot
 
 runtimes:
   copilot:

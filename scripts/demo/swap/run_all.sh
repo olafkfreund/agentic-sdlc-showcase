@@ -28,8 +28,8 @@ PY
 )
 
 printf '\n  Scoring the repository under each agent runtime:\n\n'
-printf '  %-9s  %-8s  %-7s  %-7s  %s\n' runtime gates evals subst diff
-printf '  %-9s  %-8s  %-7s  %-7s  %s\n' --------- -------- ------- ------- ----
+printf '  %-9s  %-8s  %-7s  %-7s  %s\n' runtime gates evals subst 'cost vs HEAD'
+printf '  %-9s  %-8s  %-7s  %-7s  %s\n' --------- -------- ------- ------- ------------
 FAIL=0
 
 for rt in $RUNTIMES; do
@@ -42,7 +42,8 @@ for rt in $RUNTIMES; do
   [ "${EVALS:-}" = "24/24" ] || FAIL=1
   [ "${SUBST:-}" = "12/12" ] || FAIL=1
 
-  # The whole diff a vendor change costs, measured rather than claimed.
+  # The whole diff a vendor change costs, measured rather than claimed. The runtime
+  # already selected costs nothing, which is why it reads 0.
   DIFF=$(git diff --numstat -- .agent/runtimes.yaml | awk '{print $1"+ "$2"-"}')
 
   printf '  %-9s  %-8s  %-7s  %-7s  %s\n' "$rt" "$GATES" "${EVALS:-?}" "${SUBST:-?}" "${DIFF:-0+ 0-}"
