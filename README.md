@@ -30,6 +30,20 @@ context, the skills, the policy, the gates and the evidence do not move.
 
 ## Try it in two minutes
 
+With Nix — the toolchain is pinned, so it behaves the same on a machine that has never
+seen this repository:
+
+```bash
+nix develop          # or: devenv shell, or: direnv allow
+just demo            # the whole thing, narrated, nine acts
+```
+
+`just demo` exits non-zero if any act fails, which is what stops it rotting between
+engagements: the demonstration is a test, not a performance. `just demo --fast` drops the
+pauses; `just demo --live` adds the pipeline running on GitHub.
+
+Without Nix, nothing is lost — this is what CI runs:
+
 ```bash
 python -m venv .venv && .venv/bin/pip install -e '.[dev]'
 make build test lint gates     # the closed loop plus the control layer
