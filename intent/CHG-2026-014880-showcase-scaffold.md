@@ -4,7 +4,7 @@ risk_class: R3
 autonomy_tier: A2
 controls: [CHG-04, TRC-01, HUM-14, TPR-05, SEC-API-01, DP-11, FIN-02, FRZ-01, SOD-01]
 data_classification: internal
-originator: olaf.krasicki-freund@synechron.com
+originator: olaf@freundcloud.com
 agent_identity: svc-agent-platform
 model_route: gateway/tier-frontier
 supersedes: null
@@ -25,7 +25,7 @@ that operates. Neither, in the end, can a supervisor.
 
 ## Who is affected
 
-Synechron consultants presenting the playbook — every engagement conversation. The
+Anyone presenting the playbook — every engagement conversation. The
 prospect's CISO, head of engineering and internal audit, who need to agree on what "the
 agent is allowed to do" means before a programme can start. Our own delivery teams, who
 otherwise rebuild this scaffolding per engagement.

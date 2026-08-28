@@ -1,6 +1,6 @@
 # payments-service
 
-Reference service for the Synechron Agentic SDLC Playbook. Small on purpose: it exists so the
+Reference service for the Agentic SDLC Playbook. Small on purpose: it exists so the
 deterministic gates in `policy/` have real code to pass or fail on.
 
 ## Commands

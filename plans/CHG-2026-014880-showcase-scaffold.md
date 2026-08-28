@@ -4,7 +4,7 @@ risk_class: R3
 autonomy_tier: A2
 controls: [CHG-04, TRC-01, HUM-14, TPR-05, SEC-API-01, DP-11, FIN-02, FRZ-01, SOD-01]
 data_classification: internal
-originator: olaf.krasicki-freund@synechron.com
+originator: olaf@freundcloud.com
 agent_identity: svc-agent-platform
 model_route: gateway/tier-frontier
 supersedes: null

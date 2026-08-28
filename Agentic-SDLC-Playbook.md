@@ -2,7 +2,7 @@
 
 ## A model-agnostic operating model for regulated enterprises
 
-**Synechron** · Version 1.0 · August 2026
+Version 1.0 · August 2026
 
 ---
 
@@ -29,7 +29,7 @@ Each is supported by competing agent products, which is precisely what makes the
 
 **The test this playbook is built around — the Substitution Test:** *can you change your agent runtime and your underlying model on a Monday and have identical context, identical controls and identical audit evidence on Tuesday?* If the answer is no, you have a vendor's SDLC, not an agentic one.
 
-Synechron designs, builds and operates this model inside regulated enterprises. Section 11 sets out how.
+Section 11 sets out how this model is designed, built and operated inside regulated enterprises.
 
 ---
 
@@ -159,7 +159,7 @@ intent.md  →  spec.md  →  plan.md  →  diff + tests  →  PR + review findi
 - **The release record** — what was deployed, from which artifact digest, under whose authorisation.
 - **The finding or incident record** — which becomes the next `intent.md`.
 
-### 6.2 The artifact header (Synechron addition)
+### 6.2 The artifact header
 
 Plain markdown artifacts are not enough for a regulated change process. Every artifact in the chain carries a machine-readable header:
 
@@ -461,9 +461,9 @@ A realistic caution: the tooling in the first thirty days is the easy part. The 
 
 ---
 
-## 11. How Synechron delivers this
+## 11. How this gets delivered
 
-Synechron combines financial services domain depth with hands-on platform engineering — the combination this work needs. Agentic SDLC transformation fails when it is run as a tooling rollout by people who have not sat in a bank's change advisory board, and it fails equally when it is run as a governance exercise by people who cannot write the pipeline.
+Delivering this needs financial services domain depth and hands-on platform engineering together — that combination is the requirement, not a preference. Agentic SDLC transformation fails when it is run as a tooling rollout by people who have not sat in a bank's change advisory board, and it fails equally when it is run as a governance exercise by people who cannot write the pipeline.
 
 ### 11.1 Service offerings
 
@@ -600,4 +600,4 @@ Nine or fewer: you have a vendor SDLC. Ten or eleven: portable in principle, unt
 
 ---
 
-*Prepared by Synechron. This document describes an implementation approach and does not constitute legal or regulatory advice; regulatory interpretations should be confirmed with your compliance and legal functions.*
+*This document describes an implementation approach and does not constitute legal or regulatory advice; regulatory interpretations should be confirmed with your compliance and legal functions.*

@@ -40,7 +40,7 @@ def front_matter(**fields: object) -> str:
 
 
 def write_playbook() -> None:
-    source = ROOT / "Synechron-Agentic-SDLC-Playbook.md"
+    source = ROOT / "Agentic-SDLC-Playbook.md"
     body = source.read_text()
     # The document opens with its own H1; the layout renders the title, so drop it
     # rather than showing the same heading twice.

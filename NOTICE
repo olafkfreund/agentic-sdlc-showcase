@@ -1,0 +1,36 @@
+Agentic SDLC — runnable reference implementation
+Copyright 2026 Olaf Krasicki Freund
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+--------------------------------------------------------------------------------
+WHAT YOU MAY DO WITH THIS
+--------------------------------------------------------------------------------
+
+Fork it, adapt it, run it commercially, ship products built on it. Apache-2.0
+covers everything here: the service, the deterministic gates, the policy tables,
+the workflows, the skills, the eval suite, the demo and recording tooling, the
+site, the artifact chain, and `Agentic-SDLC-Playbook.md` itself.
+
+The licence is deliberately permissive and deliberately Apache rather than MIT:
+Apache-2.0 carries an express patent grant, which is what an enterprise legal
+review asks about before anyone is allowed to adopt a reference implementation.
+
+This matters more here than it would elsewhere. The repository's central argument
+is that an operating model must be portable — that you can change your mind about
+a vendor without rebuilding your controls. A portability claim is worth nothing if
+the terms under which you may take the thing are ambiguous. So they are not.
+
+The README's "Adopting this" section means what it says.
+
+--------------------------------------------------------------------------------
+DEMO DATA
+--------------------------------------------------------------------------------
+
+The evidence records, attestations, change ids and the payments service in
+`service/` are synthetic, produced by this repository's own pipeline. They are not
+any institution's audit records and must not be presented as such.
+
+This repository describes an implementation approach and does not constitute legal
+or regulatory advice. Regulatory interpretations should be confirmed with your own
+compliance and legal functions.

@@ -1,7 +1,7 @@
 [project]
 name = "agentic-sdlc-showcase"
 version = "1.0.0"
-description = "Runnable reference implementation of the Synechron Agentic SDLC Playbook"
+description = "Runnable reference implementation of the Agentic SDLC Playbook"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115,<0.120",

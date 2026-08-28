@@ -57,7 +57,7 @@ jobs:
         uses: actions/attest@v2
         with:
           subject-path: dist/*.whl
-          predicate-type: https://synechron.com/attestations/agentic-sdlc/v1
+          predicate-type: https://olafkfreund.github.io/agentic-sdlc-showcase/attestations/v1
           predicate-path: evidence/bundle.json
 
 
