@@ -120,12 +120,32 @@ but "what does the tool make you give up in order to do it".
 
 | Setting | Value | Playbook |
 |---|---|---|
-| Branch protection on `main` | code owner review required; `require_last_push_approval`; linear history; no force push; conversation resolution | Stage 5 control point |
+| Branch protection on `main` | code owner review required; `require_last_push_approval`; linear history; no force push; conversation resolution; **`enforce_admins` off** | Stage 5 control point |
 | Required status checks | Deterministic gates · Build, test, lint · Configuration evals · Substitution Test | §5.4 |
 | `staging` environment | no reviewers — the agent deploys within a policy envelope | Stage 5.6 |
 | `production` environment | required reviewer, protected branches only; **`prevent_self_review` off** | Stage 5.6 |
 | `CODEOWNERS` | `@olafkfreund`; on adoption, the control layer needs platform team **and** second line | §8.4 SOD-01 |
 | GitHub Pages | built by `pages.yml` with the Jekyll engine, deployed from the `github-pages` environment | — |
+
+### `enforce_admins` is off here, and the merge that proved it
+
+`CHG-2026-014906` reached `main` through a pull request on which every gate passed and
+the **code-owner review requirement refused**, because `CODEOWNERS` names one identity
+and that identity authored the pull request. GitHub does not permit self-approval, and
+there is no second human in this repository to satisfy the rule.
+
+It merged by repository-admin bypass. That is worth stating plainly rather than leaving
+implied by a green tick:
+
+- **The deterministic layer was not bypassed.** All eight checks ran and passed on the
+  diff. Admin bypass overrides the human-approval requirement and nothing else.
+- **In a real deployment that merge would not have been possible**, and it should not be.
+  The concession exists because the population of humans here is one.
+- The override is visible: the rationale is a comment on the pull request, and the merge
+  is attributable to a named administrator.
+
+A control that can be overridden is not the same as a control that is absent, but it is
+also not the same as the control the table appears to describe. Hence this paragraph.
 
 ### `prevent_self_review` is off here, and must not be in yours
 
