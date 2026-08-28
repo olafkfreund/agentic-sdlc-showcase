@@ -61,12 +61,34 @@ pass `secrets.AGENT_PAT`. Where the secret is absent it falls back to `GITHUB_TO
 assignment finds no bot, and the step **says so** — a plain step summary naming both
 causes, plus a `::warning::`. It never reports success.
 
+Configured here, as a fine-grained token scoped to this repository alone:
+
+| Permission | Access | Why |
+|---|---|---|
+| **Agent tasks** | read and write | Assigning the coding agent. This is the one `GITHUB_TOKEN` lacks. |
+| Issues | read and write | Stages 2 and 6 open the labelled task issue |
+| Pull requests | read and write | The agent opens its output as a pull request |
+| Metadata | read-only | Mandatory, added automatically |
+
 ```bash
-gh secret set AGENT_PAT --repo <owner>/<repo>   # a PAT with the `copilot` scope
+gh secret set AGENT_PAT --repo <owner>/<repo>    # prompts; never write it to a file
 ```
 
-Without it, Stage 2 and Stage 6 open the labelled issue and a human picks it up. The
-chain, the gates and the evidence are unaffected.
+Two classic `ghp_` tokens were auto-revoked before this worked, within seconds of being
+written to a file on disk. That is GitHub's secret scanning doing its job, and it is worth
+knowing before you debug the wrong thing: a token that returns `401` immediately after
+creation has probably been revoked, not mistyped.
+
+Without the secret, Stage 2 and Stage 6 open the labelled issue and a human picks it up.
+The chain, the gates and the evidence are unaffected.
+
+### The assignee login is not the actor login
+
+The agent is *resolved* as `copilot-swe-agent` and *assigned* as `Copilot`. Both are
+declared in `.agent/runtimes.yaml`, because the verification step re-reads the assignees
+and has to match the right one. Matching the wrong one — or merely checking the list is
+non-empty — passes on an issue assigned only to a human, which is the same silent success
+this step exists to refuse.
 
 ### Copilot code review
 

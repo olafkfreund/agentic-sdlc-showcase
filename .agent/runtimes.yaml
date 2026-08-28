@@ -27,6 +27,10 @@ runtimes:
     invocation: assign
     # Assignment, not a mention. `@copilot` in an issue body renders and starts nothing.
     actor: copilot-swe-agent
+    # The login it is assigned *as* differs from the login it is resolved *by*.
+    # Both are declared, because a verification that matches the wrong one passes
+    # on an issue assigned to a human.
+    assignee: Copilot
     reviewer: copilot-pull-request-reviewer[bot]
     credential: github_token
     needs_gateway: false

@@ -21,10 +21,10 @@ inputs:
   agent-token:
     description: >
       Token used to *invoke* an agent identity. The default `GITHUB_TOKEN` cannot:
-      `suggestedActors(capabilities:[CAN_BE_ASSIGNED])` returns no Bot for it, so the
-      assignment silently resolves to nothing. A PAT with the `copilot` scope can.
-      Falls back to `github-token`, in which case the step reports plainly that no agent
-      took the task rather than pretending one did.
+      `suggestedActors(capabilities:[CAN_BE_ASSIGNED])` returns no Bot for it at all, so
+      the assignment silently resolves to nothing. A fine-grained PAT with **Agent tasks:
+      read and write** does. Falls back to `github-token`, in which case the step reports
+      plainly that no agent took the task rather than pretending one did.
     required: false
     default: ""
 
@@ -109,7 +109,7 @@ runs:
       run: |
         set -uo pipefail
         OWNER="${REPO%%/*}"; NAME="${REPO##*/}"
-        ACTOR=$(python -c "import yaml;d=yaml.safe_load(open('.agent/runtimes.yaml'));print(d['runtimes'][d['selected']]['actor'])")
+        read -r ACTOR ASSIGNEE <<<"$(python -c "import yaml; d=yaml.safe_load(open('.agent/runtimes.yaml')); r=d['runtimes'][d['selected']]; print(r['actor'], r.get('assignee') or r['actor'])")"
 
         BOT_ID=$(gh api graphql -f owner="$OWNER" -f name="$NAME" -f query='
           query($owner:String!, $name:String!) {
@@ -132,8 +132,8 @@ runs:
             echo ""
             echo "1. **The token cannot invoke an agent identity.** The default \`GITHUB_TOKEN\`"
             echo "   sees no assignable Bot at all, so the assignment resolves to nothing."
-            echo "   Set an \`AGENT_PAT\` secret — a token with the \`copilot\` scope — and"
-            echo "   this step uses it instead."
+            echo "   Set an \`AGENT_PAT\` secret — a fine-grained PAT with **Agent tasks:"
+            echo "   read and write** — and this step uses it instead."
             echo "2. The coding agent is off: Settings > Copilot > Coding agent."
             echo ""
             echo "To use a different runtime instead: \`make swap RUNTIME=claude\`."
@@ -155,14 +155,17 @@ runs:
             }
           }' >/dev/null
 
+        # Re-read, and check the *agent* is among the assignees. Testing only that the
+        # list is non-empty would report success for an issue assigned to a human —
+        # which is the same silent-pass this whole step exists to refuse.
         ASSIGNEES=$(gh issue view "$ISSUE" --json assignees --jq '[.assignees[].login]|join(",")')
         echo "assignees: ${ASSIGNEES:-(none)}"
-        if [ -n "$ASSIGNEES" ]; then
+        if echo ",$ASSIGNEES," | grep -qiF ",$ASSIGNEE,"; then
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Assigned** to \`${ASSIGNEES}\`." >> "$GITHUB_STEP_SUMMARY"
           echo "invoked=true" >> "$GITHUB_OUTPUT"
         else
-          echo "::warning::Assignment did not land on issue #${ISSUE}; a human takes this stage."
+          echo "::warning::$ASSIGNEE is not among the assignees on issue #${ISSUE}; a human takes this stage."
           echo "invoked=false" >> "$GITHUB_OUTPUT"
         fi
 
