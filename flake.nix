@@ -40,6 +40,10 @@
             pyyaml
             pytest
             httpx
+            # pyproject allows ruff >=0.8,<0.15, so the lint rules must hold across
+            # that range — nixpkgs pins one end and a fresh `pip install` the other.
+            # Two environments that disagree about "lint clean" is exactly the drift
+            # this repository argues against, so the code satisfies both.
             ruff
             build
           ]

@@ -13,8 +13,10 @@
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
+# PY may be a path (.venv/bin/python) or a bare name (`python`, inside nix develop).
+# `[ -x ]` only answers the first, so ask both and fall back once.
 PY="${PY:-.venv/bin/python}"
-[ -x "$PY" ] || PY=python3
+command -v "$PY" >/dev/null 2>&1 || [ -x "$PY" ] || PY=python3
 PAUSE=1
 LIVE=0
 for arg in "$@"; do

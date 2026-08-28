@@ -25,7 +25,7 @@ def _names(node: ast.AST) -> set[str]:
     return {
         getattr(n, "id", getattr(n, "attr", ""))
         for n in ast.walk(node)
-        if isinstance(n, (ast.Name, ast.Attribute))
+        if isinstance(n, ast.Name | ast.Attribute)
     } | {
         n.value for n in ast.walk(node) if isinstance(n, ast.Constant) and isinstance(n.value, str)
     }
