@@ -30,6 +30,28 @@ demo-fast:
 demo-live:
     @bash scripts/demo/run_demo.sh --live
 
+# The same control layer, watched live in CI. Triggers one Stage 6 run.
+pipeline *ARGS:
+    @bash scripts/demo/pipeline_demo.sh {{ ARGS }}
+
+# Narrate what CI already did, without triggering anything.
+pipeline-observe:
+    @bash scripts/demo/pipeline_demo.sh --observe
+
+# ---------------------------------------------------------------- screencasts
+
+# Record both casts. `just record local`, `just record pipeline`, `just record --gif`.
+record *ARGS:
+    @bash scripts/demo/record.sh {{ ARGS }}
+
+# Play a recorded cast back in this terminal.
+play NAME="control-layer":
+    @asciinema play site/assets/casts/{{ NAME }}.cast
+
+# Render the casts to GIFs. Large, and git-ignored.
+record-gif:
+    @bash scripts/demo/record.sh all --gif
+
 # ---------------------------------------------------------------- the loop
 
 # Create the virtualenv and install the project. Not needed inside `nix develop`.

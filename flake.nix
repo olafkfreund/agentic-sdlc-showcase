@@ -61,6 +61,13 @@
           bash
           ruby # jekyll, for previewing the site locally
           bundler
+
+          # Screencasts. asciinema records the real terminal session rather than
+          # replaying a script into a simulated one — the recording is the run, not a
+          # reconstruction of it, which is the same standard the rest of this
+          # repository holds itself to. agg renders the cast to a GIF.
+          asciinema
+          asciinema-agg
         ];
       in
       {

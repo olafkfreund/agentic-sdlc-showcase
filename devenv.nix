@@ -20,6 +20,8 @@
     curl
     ruby # jekyll, for previewing the site locally
     bundler
+    asciinema # records the real session; see scripts/demo/record.sh
+    asciinema-agg # cast -> gif
   ];
 
   languages.python = {

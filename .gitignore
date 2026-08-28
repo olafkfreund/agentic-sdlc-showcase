@@ -12,3 +12,6 @@ site/playbook.md
 site/chain/
 site/_site/
 site/.jekyll-cache/
+
+# Screencast GIFs are rendered on demand; the .cast files are the artifact.
+site/assets/casts/*.gif
