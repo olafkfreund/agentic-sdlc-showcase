@@ -82,6 +82,34 @@ creation has probably been revoked, not mistyped.
 Without the secret, Stage 2 and Stage 6 open the labelled issue and a human picks it up.
 The chain, the gates and the evidence are unaffected.
 
+### The agent also needs credits, which is a fourth thing entirely
+
+Established by watching it fail. With the coding agent enabled, an `AGENT_PAT` that can
+invoke an agent identity, and the labels present, the assignment landed correctly and the
+agent then posted:
+
+> The agent encountered an error and was unable to start working on this issue: You don't
+> have sufficient GitHub AI Credits to start a session.
+
+So there are **four** independent prerequisites, and three of them fail silently or
+late:
+
+| | Fails how |
+|---|---|
+| Coding agent enabled for the repository | `suggestedActors` returns no Bot — silent |
+| A token that can invoke an agent identity | `suggestedActors` returns no Bot — silent, and identical to the above |
+| The labels the workflow attaches exist | `gh issue create` fails loudly, but only at Stage 2 or 6 |
+| **Available AI credits / premium requests** | The assignment succeeds; the agent comments and stops |
+
+The last one is the interesting failure, because everything upstream reports success. The
+issue is created, the assignment is verified, the workflow is green — and no work happens.
+Only the agent's own comment on the issue says why.
+
+There is no gate for this and there should not be one: **the advisory layer not running is
+not a control failure**. The deterministic gates, the artifact chain, the evidence and the
+Substitution Test are unaffected, because they depend on no agent. That is the separation
+this repository is built around, observed rather than asserted.
+
 ### The assignee login is not the actor login
 
 The agent is *resolved* as `copilot-swe-agent` and *assigned* as `Copilot`. Both are
