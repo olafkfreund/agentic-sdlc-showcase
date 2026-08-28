@@ -11,7 +11,11 @@
   description = "Agentic SDLC showcase — runnable reference implementation of the playbook";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # A stable channel, deliberately. On nixos-unstable the fastapi build pulls a
+    # test dependency whose own suite fails, which breaks the shell for a reason
+    # that has nothing to do with this repository — exactly the class of surprise a
+    # pinned demo environment exists to prevent.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
