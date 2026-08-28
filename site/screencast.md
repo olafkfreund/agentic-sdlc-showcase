@@ -91,38 +91,23 @@ description of the demo, and it would drift from the first.
   that quietly passes.
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/asciinema-player/3.8.0/asciinema-player.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/asciinema-player/3.8.0/asciinema-player.min.css">
+<!-- jsdelivr, not cdnjs: cdnjs lists the package but serves none of its dist files,
+     which is a 404 that looks like a working page until you open it. Verified by
+     requesting the asset rather than by trusting the URL. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.css">
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.min.js"></script>
 <script>
-  // Gruvbox dark, matching the rest of the site. Rendered client-side so the casts stay
-  // plain text in the repository rather than being baked into a player bundle.
-  document.querySelectorAll('.cast').forEach(function (el) {
-    AsciinemaPlayer.create(
-      '{{ site.baseurl }}/assets/casts/' + el.dataset.cast + '.cast',
-      el,
-      {
-        cols: 100,
-        rows: 34,
-        idleTimeLimit: 1.6,
-        fit: 'width',
-        terminalFontSize: '13px',
-        theme: 'gruvbox-dark',
-        markers: true,
-        title: el.dataset.title
-      }
-    );
+  // Rendered client-side so the casts stay plain text in the repository rather than
+  // being baked into a player bundle. Chapter markers come from the cast itself.
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof AsciinemaPlayer === 'undefined') return;
+    document.querySelectorAll('.cast').forEach(function (el) {
+      AsciinemaPlayer.create(
+        '{{ site.baseurl }}/assets/casts/' + el.dataset.cast + '.cast',
+        el,
+        { cols: 100, rows: 34, idleTimeLimit: 1.6, fit: 'width',
+          terminalFontSize: '13px', theme: 'gruvbox-dark' }
+      );
+    });
   });
 </script>
-<style>
-  /* The player ships its own palette; this is the Gruvbox dark one the site uses. */
-  .cast { margin: 1.5rem 0; border: 1px solid var(--bg1); border-radius: 6px; overflow: hidden; }
-  .asciinema-theme-gruvbox-dark {
-    --term-color-foreground: #ebdbb2; --term-color-background: #1d2021;
-    --term-color-0: #282828; --term-color-1: #cc241d; --term-color-2: #98971a;
-    --term-color-3: #d79921; --term-color-4: #458588; --term-color-5: #b16286;
-    --term-color-6: #689d6a; --term-color-7: #a89984; --term-color-8: #928374;
-    --term-color-9: #fb4934; --term-color-10: #b8bb26; --term-color-11: #fabd2f;
-    --term-color-12: #83a598; --term-color-13: #d3869b; --term-color-14: #8ec07c;
-    --term-color-15: #ebdbb2;
-  }
-</style>

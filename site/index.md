@@ -15,6 +15,19 @@ scores:
   - { value: "0", label: "Models in the gate", note: "the decision is arithmetic over policy" }
 ---
 
+## Sixteen seconds, and nothing in it is staged
+
+The nine acts of the control layer, recorded as they ran. The act to watch is **the gates
+refuse** — each gate has the thing it protects deliberately broken, and must go red.
+
+<div class="cast" data-cast="control-layer"></div>
+
+<p class="cast-note">
+  A recording of the real session, not a simulated terminal. If a gate had failed during
+  the take, the recording would show it.
+  <a href="{{ '/screencast/' | relative_url }}">The CI half is here →</a>
+</p>
+
 ## The claim
 
 Most agentic-SDLC material describes a workflow. This describes a **control layer**, and
@@ -119,3 +132,19 @@ header, and every gate emits a record keyed to a control id.
   produced by this repository's own pipeline against a synthetic payments service. They
   are not any institution's audit records, and nothing here should be presented as one.
 </div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.css">
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof AsciinemaPlayer === 'undefined') return;
+    document.querySelectorAll('.cast').forEach(function (el) {
+      AsciinemaPlayer.create(
+        '{{ site.baseurl }}/assets/casts/' + el.dataset.cast + '.cast',
+        el,
+        { cols: 100, rows: 34, idleTimeLimit: 1.6, fit: 'width',
+          terminalFontSize: '13px', theme: 'gruvbox-dark' }
+      );
+    });
+  });
+</script>

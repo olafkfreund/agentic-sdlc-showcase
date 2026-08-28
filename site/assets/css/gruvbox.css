@@ -258,3 +258,29 @@ footer.page a { color: var(--fg4); }
   .masthead-inner { flex-direction: column; align-items: flex-start; }
   .hero { padding-top: 2.25rem; }
 }
+
+/* ---------- asciicast player ---------- */
+
+.cast {
+  margin: 1.5rem 0;
+  border: 1px solid var(--bg1);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg0-hard);
+  min-height: 120px;
+}
+.cast-note { font-size: 0.9rem; color: var(--fg4); margin-top: -0.5rem; }
+
+/* The player ships its own palettes; this is the Gruvbox dark one the site uses. */
+.asciinema-theme-gruvbox-dark {
+  --term-color-foreground: #ebdbb2;
+  --term-color-background: #1d2021;
+  --term-color-0: #282828;  --term-color-1: #cc241d;
+  --term-color-2: #98971a;  --term-color-3: #d79921;
+  --term-color-4: #458588;  --term-color-5: #b16286;
+  --term-color-6: #689d6a;  --term-color-7: #a89984;
+  --term-color-8: #928374;  --term-color-9: #fb4934;
+  --term-color-10: #b8bb26; --term-color-11: #fabd2f;
+  --term-color-12: #83a598; --term-color-13: #d3869b;
+  --term-color-14: #8ec07c; --term-color-15: #ebdbb2;
+}
