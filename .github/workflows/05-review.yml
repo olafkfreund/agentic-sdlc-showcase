@@ -15,48 +15,80 @@ permissions:
   pull-requests: write
 
 jobs:
-  copilot-review:
-    name: Request Copilot review
+  agent-review:
+    name: Request agent review
     if: "!github.event.pull_request.draft"
     runs-on: ubuntu-latest
     steps:
-      # The agent runtime is the replaceable component (§5.2). Copilot is invoked
-      # here and nowhere else; swapping it means editing this step, not the
-      # operating model. That is the Substitution Test in one file.
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      # The agent runtime is the replaceable component (§5.2). Which reviewer identity
+      # to ask for comes from `.agent/runtimes.yaml`, so `make swap RUNTIME=<name>`
+      # retargets this too. A runtime with no review capability declares `reviewer: null`
+      # and the step says so rather than pretending.
+      - id: reviewer
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import pathlib, yaml
+          doc = yaml.safe_load(pathlib.Path(".agent/runtimes.yaml").read_text())
+          rt = doc["runtimes"][doc["selected"]]
+          print(f"runtime={doc['selected']}")
+          print(f"login={rt.get('reviewer') or ''}")
+          PY
+
+      - name: This runtime offers no review pass
+        if: steps.reviewer.outputs.login == ''
+        run: |
+          {
+            echo "## Agent review not requested"
+            echo
+            echo "Runtime \`${{ steps.reviewer.outputs.runtime }}\` declares no reviewer identity"
+            echo "in \`.agent/runtimes.yaml\`, so no agent review will appear on this pull request."
+            echo
+            echo "**The deterministic gates are unaffected** — they are the control layer and they"
+            echo "do not depend on any agent. Agent review is the fast, advisory layer (§5.4)."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::runtime ${{ steps.reviewer.outputs.runtime }} has no review pass; the gates are unaffected."
+
       - name: Request review from the agent
+        if: steps.reviewer.outputs.login != ''
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
+          REVIEWER: ${{ steps.reviewer.outputs.login }}
         run: |
           set -uo pipefail
           gh api -X POST "repos/$REPO/pulls/$PR/requested_reviewers" \
-            -f "reviewers[]=copilot-pull-request-reviewer[bot]" >/dev/null 2>&1 || true
+            -f "reviewers[]=$REVIEWER" >/dev/null 2>&1 || true
 
-          # The API returns 200 and silently ignores the reviewer when Copilot code
-          # review is not enabled for the org. A step that reports success while
-          # nothing happened is exactly the control theatre this playbook argues
-          # against, so verify the reviewer actually landed.
+          # The API returns 200 and silently ignores the reviewer when the feature is
+          # not enabled. A step that reports success while nothing happened is exactly
+          # the control theatre this playbook argues against, so verify the reviewer
+          # actually landed.
           REVIEWERS=$(gh api "repos/$REPO/pulls/$PR/requested_reviewers" \
                         --jq '[.users[].login] | join(",")')
           echo "requested reviewers: ${REVIEWERS:-(none)}"
 
-          if echo "$REVIEWERS" | grep -qi copilot; then
+          # The API reports the login without the `[bot]` suffix the request carries.
+          if echo "$REVIEWERS" | grep -qiF "${REVIEWER%%[[]bot[]]}"; then
             echo "AGENT REVIEW: requested" >> "$GITHUB_STEP_SUMMARY"
           else
             {
               echo "## Agent review NOT requested"
               echo
-              echo "Copilot code review is not enabled for this organisation, so no agent"
-              echo "review will appear on this pull request."
+              echo "\`$REVIEWER\` did not land as a reviewer, so no agent review will appear"
+              echo "on this pull request. The usual cause is that the feature is not enabled."
               echo
               echo "**The deterministic gates are unaffected** — they are the control layer"
               echo "and they do not depend on any agent. Agent review is the fast, advisory"
               echo "layer (playbook §5.4)."
               echo
-              echo "To enable: Organisation settings > Copilot > Policies > Copilot code review."
+              echo "To enable: Settings > Copilot > Policies > Copilot code review."
+              echo "To use a different runtime: \`make swap RUNTIME=claude\`."
             } >> "$GITHUB_STEP_SUMMARY"
-            echo "::warning::Copilot code review is not enabled for this org; no agent review was requested."
+            echo "::warning::$REVIEWER did not land as a reviewer; no agent review was requested."
           fi
 
   review-passes:

@@ -1,0 +1,213 @@
+name: agent-task
+description: >
+  Hand a task to whichever agent runtime .agent/runtimes.yaml selects, and report
+  honestly when no agent picked it up rather than reporting success.
+inputs:
+  issue-number:
+    description: Issue carrying the task. The agent works from this and reports back to it.
+    required: true
+  binding:
+    description: >
+      Which pipeline step this is, e.g. `stage2_spec_draft`. The route is resolved from
+      `bindings:` in .agent/routes.yaml rather than named here, so retargeting a stage is
+      a change to the model-access plane and not to this workflow.
+    required: true
+  autonomy-tier:
+    description: What the agent is permitted to do here (policy/autonomy-matrix.yaml).
+    required: true
+  github-token:
+    description: Token with issues:write on this repository.
+    required: true
+  gateway-enabled:
+    description: >
+      "true" where the model gateway is configured. A hosted runtime takes its
+      credential from the gateway and never from a key on the runner (§5.1), so it
+      runs only when this is true. `vars` and `secrets` are unavailable inside a
+      composite action, so the caller passes them in.
+    required: false
+    default: "false"
+  gateway-endpoint:
+    description: Gateway base URL. Never a provider endpoint (Substitution Test #4).
+    required: false
+    default: ""
+  gateway-token:
+    description: Short-lived gateway token. Never a provider API key.
+    required: false
+    default: ""
+outputs:
+  runtime:
+    description: The runtime that was selected.
+    value: ${{ steps.select.outputs.runtime }}
+  route:
+    description: The gateway route resolved from the binding.
+    value: ${{ steps.select.outputs.route }}
+  invoked:
+    description: '"true" when an agent actually took the task.'
+    value: ${{ steps.copilot.outputs.invoked || steps.hosted.outputs.invoked }}
+runs:
+  using: composite
+  steps:
+    # ---------------------------------------------------------------------------
+    # This file is the agent runtime plane (playbook §5.2), entire. Every stage that
+    # hands work to an agent comes through here, so swapping vendor is a one-line
+    # edit to .agent/runtimes.yaml and nothing else in the repository moves.
+    #
+    #   make swap RUNTIME=claude
+    # ---------------------------------------------------------------------------
+    - id: select
+      shell: bash
+      env:
+        BINDING: ${{ inputs.binding }}
+      run: |
+        python - <<'PY' >> "$GITHUB_OUTPUT"
+        import os, pathlib, yaml
+        doc = yaml.safe_load(pathlib.Path(".agent/runtimes.yaml").read_text())
+        name = doc["selected"]
+        rt = doc["runtimes"][name]
+
+        # A route, never a model name (Substitution Test #5). Which model serves the
+        # route is the gateway's decision, made outside this repository.
+        routes = yaml.safe_load(pathlib.Path(".agent/routes.yaml").read_text())
+        binding = os.environ["BINDING"]
+        route = routes["bindings"][binding]
+        assert route in routes["routes"], f"binding {binding} names an undeclared route"
+        print(f"route={route}")
+        print(f"runtime={name}")
+        print(f"invocation={rt['invocation']}")
+        print(f"action={rt.get('action') or ''}")
+        print(f"needs_gateway={str(rt.get('needs_gateway', False)).lower()}")
+        print(f"label={rt['name']}")
+        PY
+
+    - shell: bash
+      run: |
+        echo "### Agent runtime: ${{ steps.select.outputs.label }}" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "Route \`${{ steps.select.outputs.route }}\` · autonomy \`${{ inputs.autonomy-tier }}\` · issue #${{ inputs.issue-number }}" >> "$GITHUB_STEP_SUMMARY"
+
+    # --- invocation: assign -----------------------------------------------------
+    # The runtime is an identity in the VCS. It is *assigned*, and the assignment is
+    # verified, because an API that returns 200 while silently doing nothing is exactly
+    # the control theatre this repository argues against.
+    - id: copilot
+      if: steps.select.outputs.invocation == 'assign'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        ISSUE: ${{ inputs.issue-number }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -uo pipefail
+        OWNER="${REPO%%/*}"; NAME="${REPO##*/}"
+        ACTOR=$(python -c "import yaml;d=yaml.safe_load(open('.agent/runtimes.yaml'));print(d['runtimes'][d['selected']]['actor'])")
+
+        BOT_ID=$(gh api graphql -f owner="$OWNER" -f name="$NAME" -f query='
+          query($owner:String!, $name:String!) {
+            repository(owner:$owner, name:$name) {
+              suggestedActors(capabilities:[CAN_BE_ASSIGNED], first:50) {
+                nodes { login ... on Bot { id } }
+              }
+            }
+          }' --jq "[.data.repository.suggestedActors.nodes[] | select(.login==\"$ACTOR\") | .id][0] // \"\"")
+
+        if [ -z "$BOT_ID" ]; then
+          {
+            echo ""
+            echo "**No agent picked this up.** \`$ACTOR\` is not assignable on this repository."
+            echo ""
+            echo "The deterministic gates are unaffected — they are the control layer and depend"
+            echo "on no agent (playbook §5.4). A human takes this stage instead."
+            echo ""
+            echo "To enable: Settings > Copilot > Coding agent. To use a different runtime:"
+            echo "\`make swap RUNTIME=claude\` (or \`gemini\`, \`codex\`)."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::$ACTOR is not assignable here; issue #${ISSUE} awaits a human."
+          echo "invoked=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        ISSUE_ID=$(gh api graphql -f owner="$OWNER" -f name="$NAME" -F number="$ISSUE" -f query='
+          query($owner:String!, $name:String!, $number:Int!) {
+            repository(owner:$owner, name:$name) { issue(number:$number) { id } }
+          }' --jq '.data.repository.issue.id')
+
+        gh api graphql -f assignable="$ISSUE_ID" -f actor="$BOT_ID" -f query='
+          mutation($assignable:ID!, $actor:ID!) {
+            replaceActorsForAssignable(input:{assignableId:$assignable, actorIds:[$actor]}) {
+              assignable { ... on Issue { number } }
+            }
+          }' >/dev/null
+
+        ASSIGNEES=$(gh issue view "$ISSUE" --json assignees --jq '[.assignees[].login]|join(",")')
+        echo "assignees: ${ASSIGNEES:-(none)}"
+        if [ -n "$ASSIGNEES" ]; then
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Assigned** to \`${ASSIGNEES}\`." >> "$GITHUB_STEP_SUMMARY"
+          echo "invoked=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "::warning::Assignment did not land on issue #${ISSUE}; a human takes this stage."
+          echo "invoked=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    # --- invocation: action -----------------------------------------------------
+    # A hosted runtime runs as a step rather than as an identity. Its credential comes
+    # from the gateway (§5.1) — no provider key on any runner — so it runs only where a
+    # gateway is configured, and says so plainly where one is not.
+    - id: hosted
+      if: steps.select.outputs.invocation == 'action'
+      shell: bash
+      run: |
+        if [ "${{ inputs.gateway-enabled }}" = "true" ]; then
+          echo "invoked=pending" >> "$GITHUB_OUTPUT"
+        else
+          {
+            echo ""
+            echo "**Runtime \`${{ steps.select.outputs.runtime }}\` is selected, and no gateway is configured.**"
+            echo ""
+            echo "This runtime takes its credential from the gateway in \`.agent/routes.yaml\`,"
+            echo "never a provider key on the runner (§5.1). Set the \`AI_GATEWAY_ENABLED\`"
+            echo "repository variable and the \`AI_GATEWAY_TOKEN\` secret to run it live."
+            echo ""
+            echo "Nothing else about this stage changes: the task, the route, the autonomy tier,"
+            echo "the skills it reads and the gates it must pass are identical to every other runtime."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::runtime ${{ steps.select.outputs.runtime }} needs a gateway; none configured."
+          echo "invoked=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Claude Code
+      if: steps.select.outputs.runtime == 'claude' && steps.hosted.outputs.invoked == 'pending'
+      uses: anthropics/claude-code-action@v1
+      with:
+        github_token: ${{ inputs.github-token }}
+        prompt: |
+          Work the task in issue #${{ inputs.issue-number }} of this repository.
+          Read AGENTS.md first, then every skill in .agent/skills/ the task names.
+          You are at autonomy tier ${{ inputs.autonomy-tier }} (policy/autonomy-matrix.yaml).
+      env:
+        # The gateway, never a provider endpoint. Substitution Test #4.
+        ANTHROPIC_BASE_URL: ${{ inputs.gateway-endpoint }}
+        ANTHROPIC_AUTH_TOKEN: ${{ inputs.gateway-token }}
+
+    - name: Gemini CLI
+      if: steps.select.outputs.runtime == 'gemini' && steps.hosted.outputs.invoked == 'pending'
+      uses: google-github-actions/run-gemini-cli@v0
+      with:
+        prompt: |
+          Work the task in issue #${{ inputs.issue-number }} of this repository.
+          Read AGENTS.md first — not GEMINI.md, which this repository does not have and
+          must not grow. You are at autonomy tier ${{ inputs.autonomy-tier }}.
+      env:
+        GOOGLE_GEMINI_BASE_URL: ${{ inputs.gateway-endpoint }}
+        GEMINI_API_KEY: ${{ inputs.gateway-token }}
+
+    - name: Codex
+      if: steps.select.outputs.runtime == 'codex' && steps.hosted.outputs.invoked == 'pending'
+      uses: openai/codex-action@v1
+      with:
+        prompt: |
+          Work the task in issue #${{ inputs.issue-number }} of this repository.
+          Read AGENTS.md first. You are at autonomy tier ${{ inputs.autonomy-tier }}.
+      env:
+        OPENAI_BASE_URL: ${{ inputs.gateway-endpoint }}
+        OPENAI_API_KEY: ${{ inputs.gateway-token }}

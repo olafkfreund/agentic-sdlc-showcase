@@ -67,7 +67,7 @@ jobs:
           **Suspect deploy:** ${{ needs.detect.outputs.suspect_deploy || 'none in the window' }}
           (determined by deterministic correlation, not by a model — a lead, not a conclusion)
 
-          @copilot Diagnose only. You are at autonomy tier **A0**: read and propose,
+          Diagnose only. You are at autonomy tier **A0**: read and propose,
           nothing else. Read-only tools from the MCP allowlist (`observability`).
 
           Report what changed and what you believe caused it. Do not open a pull
@@ -80,14 +80,19 @@ jobs:
           echo "$URL"
           echo "issue=${URL##*/}" >> "$GITHUB_OUTPUT"
 
-      # A0 means read and propose. The agent is assigned so it actually looks;
-      # the tier is what stops it touching anything (policy/autonomy-matrix.yaml).
-      - name: Hand the diagnosis to the coding agent
+      # A0 means read and propose. The agent is invoked so it actually looks; the
+      # tier is what stops it touching anything (policy/autonomy-matrix.yaml).
+      - name: Hand the task to the agent runtime
         if: steps.task.outputs.issue != ''
-        uses: ./.github/actions/assign-copilot
+        uses: ./.github/actions/agent-task
         with:
           issue-number: ${{ steps.task.outputs.issue }}
+          binding: stage6_diagnose
+          autonomy-tier: A0
           github-token: ${{ github.token }}
+          gateway-enabled: ${{ vars.AI_GATEWAY_ENABLED }}
+          gateway-endpoint: ${{ vars.AI_GATEWAY_ENDPOINT }}
+          gateway-token: ${{ secrets.AI_GATEWAY_TOKEN }}
 
   propose:
     # 3 sigma: the agent may act, but only by opening a PR into the review gate
@@ -179,13 +184,18 @@ jobs:
         run: |
           URL=$(gh issue create --title "[Stage 6] Weekly model-driven codebase scan" \
             --label "stage-6,scan,autonomy-A0" \
-            --body "@copilot Review this repository against .agent/skills/secure-api-review/SKILL.md and REVIEW.md pass 2. A bounded finding becomes a PR through the review gate; anything wider becomes an intent.md. You are at A0 for this task.")
+            --body "Review this repository against .agent/skills/secure-api-review/SKILL.md and REVIEW.md pass 2. A bounded finding becomes a PR through the review gate; anything wider becomes an intent.md. You are at A0 for this task.")
           echo "$URL"
           echo "issue=${URL##*/}" >> "$GITHUB_OUTPUT"
 
-      - name: Hand the scan to the coding agent
+      - name: Hand the task to the agent runtime
         if: steps.task.outputs.issue != ''
-        uses: ./.github/actions/assign-copilot
+        uses: ./.github/actions/agent-task
         with:
           issue-number: ${{ steps.task.outputs.issue }}
+          binding: stage6_scan
+          autonomy-tier: A0
           github-token: ${{ github.token }}
+          gateway-enabled: ${{ vars.AI_GATEWAY_ENABLED }}
+          gateway-endpoint: ${{ vars.AI_GATEWAY_ENDPOINT }}
+          gateway-token: ${{ secrets.AI_GATEWAY_TOKEN }}

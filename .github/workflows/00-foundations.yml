@@ -41,11 +41,39 @@ jobs:
               if meta.get("name") != skill.parent.name:
                   errors.append(f"{skill}: name {meta.get('name')!r} != directory")
           for path in (".agent/routes.yaml", ".agent/mcp-allowlist.yaml",
+                       ".agent/runtimes.yaml",
                        "policy/autonomy-matrix.yaml", "policy/risk-classes.yaml",
                        "policy/controls.yaml", "policy/frozen-paths.yaml",
                        "ops/response-tiers.yaml", "ops/otel-collector.yaml"):
               try: yaml.safe_load(pathlib.Path(path).read_text())
               except Exception as exc: errors.append(f"{path}: {exc}")
+
+          # The runtime plane (§5.2). A vendor named in a workflow rather than declared
+          # here is the portability debt this repository exists to argue against, so the
+          # swap is only real while every stage goes through the one adapter.
+          runtimes = yaml.safe_load(pathlib.Path(".agent/runtimes.yaml").read_text())
+          if runtimes["selected"] not in runtimes["runtimes"]:
+              errors.append(f".agent/runtimes.yaml: selected {runtimes['selected']!r} is not declared")
+          routes = yaml.safe_load(pathlib.Path(".agent/routes.yaml").read_text())
+          for step, route in routes["bindings"].items():
+              if route not in routes["routes"]:
+                  errors.append(f".agent/routes.yaml: binding {step} names undeclared route {route}")
+          # Vendor *identifiers* — the action reference, the bot login, the reviewer —
+          # may appear only in the adapter. A vendor's name in prose is fine; its login
+          # wired into a stage is the portability debt.
+          identifiers = {
+              str(value)
+              for runtime in runtimes["runtimes"].values()
+              for key in ("action", "actor", "reviewer")
+              if (value := runtime.get(key))
+          }
+          for wf in sorted(pathlib.Path(".github/workflows").glob("*.yml")):
+              text = wf.read_text()
+              named = sorted(i for i in identifiers if i in text)
+              if named:
+                  errors.append(
+                      f"{wf}: wires runtime identifier(s) {named} directly. Every stage hands "
+                      f"work to .github/actions/agent-task so a vendor swap stays one line.")
           print("\n".join(errors) or "context plane valid")
           sys.exit(1 if errors else 0)
           PY

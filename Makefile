@@ -1,5 +1,5 @@
 # The closed loop (playbook Stage 4.1): one command each, non-zero on failure.
-.PHONY: install build test lint gates eval substitution negative all clean
+.PHONY: install build test lint gates eval substitution negative swap all clean
 
 PY ?= python3
 
@@ -39,5 +39,16 @@ substitution:
 # Prove the gates refuse. A gate verified only by passing is not verified.
 negative:
 	bash scripts/demo/negative/run_all.sh
+
+# The agent runtime is the most replaceable component (playbook §5.2).
+#   make swap                 switch through every runtime, scoring each
+#   make swap RUNTIME=claude  switch to one, and print exactly what moved
+RUNTIME ?=
+swap:
+ifeq ($(RUNTIME),)
+	bash scripts/demo/swap/run_all.sh
+else
+	@$(PY) scripts/switch_runtime.py $(RUNTIME)
+endif
 
 all: build test lint gates

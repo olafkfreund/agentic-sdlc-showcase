@@ -5,6 +5,12 @@ name: "Stage 4 — Test"
 on:
   pull_request:
   push: { branches: [main] }
+  # Stage 5.7 says rollback should be the most exercised path in the pipeline. The
+  # drill below was gated on `schedule` with no schedule to fire it, so it had never
+  # run unattended — a rehearsal that only happens when someone remembers is the
+  # rehearsal you have not done.
+  schedule:
+    - cron: "23 5 * * 2"
   workflow_dispatch:
 
 permissions:

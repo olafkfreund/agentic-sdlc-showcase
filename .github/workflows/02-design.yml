@@ -33,9 +33,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/pending_specs.py
 
-      # The agent runtime is invoked here. Swapping Copilot for another runtime is
-      # an edit to this step plus .github/actions/assign-copilot; the skill, the
-      # intent format and the gates do not move.
+      # The agent runtime is invoked here, through the one adapter every stage uses.
+      # Swapping vendor is `make swap RUNTIME=claude` — one line in .agent/runtimes.yaml.
+      # The skill, the intent format, the route and the gates do not move.
       - id: task
         name: Write the design task
         if: steps.which.outputs.change_id != '' && steps.which.outputs.already_requested != 'true'
@@ -47,14 +47,16 @@ jobs:
             --title "[Stage 2] Draft spec for $CID" \
             --label "stage-2,spec,autonomy-A2" \
             --body "$(cat <<BODY
-          @copilot Draft \`specs/$CID-<slug>.md\` from \`intent/$CID-*.md\`.
+          Draft \`specs/$CID-<slug>.md\` from \`intent/$CID-*.md\`.
 
           Load and follow \`.agent/skills/spec-author/SKILL.md\` and every policy skill
           applicable to the domain, in particular \`.agent/skills/secure-api-review/\`.
           Read \`AGENTS.md\` first.
 
           Carry the same \`change_id\` and the artifact header from
-          \`docs/artifact-header.md\`. Model route: \`gateway/tier-frontier\`.
+          \`docs/artifact-header.md\`. The model route for this stage is bound in
+          \`.agent/routes.yaml\` under \`bindings.stage2_spec_draft\` — carry that route
+          in the header, never a model name.
 
           **Flag every policy conflict explicitly and prominently. Do not resolve them.**
           That section is the highest-value output of this stage; a named policy owner
@@ -69,14 +71,20 @@ jobs:
           echo "$URL"
           echo "issue=${URL##*/}" >> "$GITHUB_OUTPUT"
 
-      # An `@copilot` mention is a mention. The coding agent starts on assignment,
-      # so the task is assigned — and the assignment is verified.
-      - name: Hand the task to the coding agent
+      # An `@copilot` mention is a mention. Every runtime is handed the task through
+      # one adapter, so swapping vendor is `make swap RUNTIME=<name>` and nothing here
+      # moves (playbook §5.2).
+      - name: Hand the task to the agent runtime
         if: steps.task.outputs.issue != ''
-        uses: ./.github/actions/assign-copilot
+        uses: ./.github/actions/agent-task
         with:
           issue-number: ${{ steps.task.outputs.issue }}
+          binding: stage2_spec_draft
+          autonomy-tier: A2
           github-token: ${{ github.token }}
+          gateway-enabled: ${{ vars.AI_GATEWAY_ENABLED }}
+          gateway-endpoint: ${{ vars.AI_GATEWAY_ENDPOINT }}
+          gateway-token: ${{ secrets.AI_GATEWAY_TOKEN }}
 
       - name: Already asked
         if: steps.which.outputs.already_requested == 'true'
