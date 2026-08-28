@@ -1,0 +1,84 @@
+name: assign-copilot
+description: >
+  Hand a task to the GitHub Copilot coding agent by assigning it, and report
+  honestly when the agent is not available rather than reporting success.
+inputs:
+  issue-number:
+    description: Issue number to assign to the coding agent
+    required: true
+  github-token:
+    description: Token with issues:write on this repository
+    required: true
+outputs:
+  assigned:
+    description: '"true" when the coding agent actually took the assignment'
+    value: ${{ steps.assign.outputs.assigned }}
+runs:
+  using: composite
+  steps:
+    # The agent runtime is the replaceable component (playbook §5.2). It is invoked
+    # here and in no other way, so swapping Copilot for another runtime is an edit to
+    # this one composite action — not to the skills, the artifacts or the gates.
+    #
+    # `@copilot` in an issue body is a mention, not an invocation. The coding agent
+    # starts when it is *assigned*, so that is what this does; and it verifies the
+    # assignment landed, because an API that returns 200 while silently doing nothing
+    # is exactly the control theatre this repository argues against.
+    - id: assign
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        ISSUE: ${{ inputs.issue-number }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -uo pipefail
+        OWNER="${REPO%%/*}"; NAME="${REPO##*/}"
+
+        BOT_ID=$(gh api graphql -f owner="$OWNER" -f name="$NAME" -f query='
+          query($owner:String!, $name:String!) {
+            repository(owner:$owner, name:$name) {
+              suggestedActors(capabilities:[CAN_BE_ASSIGNED], first:50) {
+                nodes { login ... on Bot { id } }
+              }
+            }
+          }' --jq '[.data.repository.suggestedActors.nodes[]
+                    | select(.login=="copilot-swe-agent") | .id][0] // ""')
+
+        if [ -z "$BOT_ID" ]; then
+          {
+            echo "## Copilot coding agent not available"
+            echo
+            echo "Issue #${ISSUE} was opened but no agent picked it up: \`copilot-swe-agent\`"
+            echo "is not assignable on this repository."
+            echo
+            echo "**The deterministic gates are unaffected.** They are the control layer and"
+            echo "depend on no agent (playbook §5.4). A human does this stage instead."
+            echo
+            echo "To enable: Settings > Copilot > Coding agent."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::Copilot coding agent is not assignable here; issue #${ISSUE} awaits a human."
+          echo "assigned=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        ISSUE_ID=$(gh api graphql -f owner="$OWNER" -f name="$NAME" -F number="$ISSUE" -f query='
+          query($owner:String!, $name:String!, $number:Int!) {
+            repository(owner:$owner, name:$name) { issue(number:$number) { id } }
+          }' --jq '.data.repository.issue.id')
+
+        gh api graphql -f assignable="$ISSUE_ID" -f actor="$BOT_ID" -f query='
+          mutation($assignable:ID!, $actor:ID!) {
+            replaceActorsForAssignable(input:{assignableId:$assignable, actorIds:[$actor]}) {
+              assignable { ... on Issue { number } }
+            }
+          }' >/dev/null
+
+        ASSIGNEES=$(gh issue view "$ISSUE" --json assignees --jq '[.assignees[].login]|join(",")')
+        echo "assignees: ${ASSIGNEES:-(none)}"
+        if echo "$ASSIGNEES" | grep -qi copilot; then
+          echo "AGENT ASSIGNED: issue #${ISSUE} -> ${ASSIGNEES}" >> "$GITHUB_STEP_SUMMARY"
+          echo "assigned=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "::warning::Assignment did not land on issue #${ISSUE}; a human takes this stage."
+          echo "assigned=false" >> "$GITHUB_OUTPUT"
+        fi

@@ -1,0 +1,103 @@
+---
+layout: home
+title: Overview
+heading: The operating model, as code that runs.
+lede: >-
+  A runnable reference implementation of the Agentic SDLC Playbook — seven stages,
+  five planes, a portable artifact chain, an autonomy matrix, and the Substitution
+  Test. Gates that refuse, and evidence that is a by-product rather than a
+  reconstruction.
+scores:
+  - { value: "12/12", label: "Substitution Test", note: "portable — scored from the repository" }
+  - { value: "12/12", label: "Deterministic gates", note: "each proven to refuse, not just to pass" }
+  - { value: "24/24", label: "Configuration evals", note: "non-interactive regression suite" }
+  - { value: "0", label: "Models in the gate", note: "the decision is arithmetic over policy" }
+---
+
+## The claim
+
+Most agentic-SDLC material describes a workflow. This describes a **control layer**, and
+then runs it. Three things follow from that, and each one is checkable on this site:
+
+<div class="cards">
+  <div class="card">
+    <span class="tag">Principle 4</span>
+    <h3>No model in the gate</h3>
+    <p>Models diagnose, propose, draft and review. The decision to allow or block is
+    arithmetic over version-controlled YAML — the same tables governance signed off.</p>
+  </div>
+  <div class="card">
+    <span class="tag">Principle 5</span>
+    <h3>Evidence as a by-product</h3>
+    <p>Every gate writes a JSON record as it runs. Nothing is reconstructed at audit
+    time, because a reconstruction is a story about a control, not the control.</p>
+  </div>
+  <div class="card">
+    <span class="tag">Appendix C</span>
+    <h3>Survives a change of vendor</h3>
+    <p>Copilot is the agent runtime here, invoked in one step per stage. Swapping it is
+    an edit to those steps. The context, policy, gates and evidence do not move.</p>
+  </div>
+</div>
+
+## Try it in two minutes
+
+```bash
+git clone https://github.com/olafkfreund/agentic-sdlc-showcase
+cd agentic-sdlc-showcase
+python -m venv .venv && .venv/bin/pip install -e '.[dev]'
+
+make build test lint gates     # the closed loop plus the control layer
+make substitution              # Appendix C, scored from the repository
+make eval                      # 24 configuration regression cases
+make negative                  # break each protected thing; watch every gate refuse
+```
+
+`make negative` is the one that matters.
+
+> A gate verified only by passing is indistinguishable from a gate that cannot fail.
+
+## The question this exists to answer
+
+> *Which production changes touched control `SEC-API-01`, which were agent-authored, at
+> what autonomy tier, and who approved each one?*
+
+```bash
+python scripts/query_evidence.py --control SEC-API-01
+```
+
+Seconds, from the repository. The playbook calls answering that in minutes rather than a
+week **the single highest-value output of the whole programme**. It works because every
+artifact in [the chain]({{ '/chain/' | relative_url }}) opens with a machine-readable
+header, and every gate emits a record keyed to a control id.
+
+## Where to go next
+
+<div class="cards">
+  <div class="card">
+    <span class="tag">Stage by stage</span>
+    <h3><a href="{{ '/stages/' | relative_url }}">The seven stages</a></h3>
+    <p>What each stage's control point is, and which workflow enforces it.</p>
+  </div>
+  <div class="card">
+    <span class="tag">The control layer</span>
+    <h3><a href="{{ '/gates/' | relative_url }}">The gates that refuse</a></h3>
+    <p>Twelve deliberate violations and the gate that stops each one.</p>
+  </div>
+  <div class="card">
+    <span class="tag">Appendix C</span>
+    <h3><a href="{{ '/substitution/' | relative_url }}">The Substitution Test</a></h3>
+    <p>Twelve checks executed against the tree — no marks for a document that claims.</p>
+  </div>
+  <div class="card">
+    <span class="tag">Source</span>
+    <h3><a href="{{ '/playbook/' | relative_url }}">The playbook itself</a></h3>
+    <p>The full v1.0 text this repository implements, published as it is on disk.</p>
+  </div>
+</div>
+
+<div class="disclaimer">
+  <strong>Demo data.</strong> The evidence records, attestations and change ids here are
+  produced by this repository's own pipeline against a synthetic payments service. They
+  are not any institution's audit records, and nothing here should be presented as one.
+</div>

@@ -1,0 +1,20 @@
+---
+layout: default
+---
+<div class="hero">
+  <h1>{{ page.title }}</h1>
+  {%- if page.lede %}
+  <p class="lede">{{ page.lede }}</p>
+  {%- endif %}
+  {%- if page.source %}
+  <div class="cta">
+    <a class="btn" href="{{ site.repo_url }}/blob/main/{{ page.source }}">View <code>{{ page.source }}</code> on GitHub ↗</a>
+  </div>
+  {%- endif %}
+</div>
+
+<main>
+  <div class="prose">
+    {{ content }}
+  </div>
+</main>

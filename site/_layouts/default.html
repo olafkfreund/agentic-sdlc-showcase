@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page.title and page.url != "/" %}{{ page.title }} · {{ site.title }}{% else %}{{ site.title }} — {{ site.tagline }}{% endif %}</title>
+  <meta name="description" content="{{ page.description | default: site.description | strip_newlines }}">
+  <meta name="theme-color" content="#1d2021">
+  <meta property="og:title" content="{{ page.title | default: site.title }}">
+  <meta property="og:description" content="{{ page.description | default: site.description | strip_newlines }}">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="{{ '/assets/css/gruvbox.css' | relative_url }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%231d2021'/><rect x='4' y='3' width='2.2' height='10' fill='%23fe8019'/><rect x='8' y='6' width='4.5' height='2' fill='%23b8bb26'/><rect x='8' y='10' width='4.5' height='2' fill='%2383a598'/></svg>">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <a class="brand" href="{{ '/' | relative_url }}">agentic-sdlc</a>
+    <nav class="top">
+      {%- for item in site.nav %}
+      <a href="{{ item.url | relative_url }}"{% if page.url == item.url %} class="current"{% endif %}>{{ item.title }}</a>
+      {%- endfor %}
+      <a href="{{ site.repo_url }}">GitHub&nbsp;↗</a>
+    </nav>
+  </div>
+</header>
+
+{{ content }}
+
+<footer class="page">
+  <div class="inner">
+    <p>
+      Built from the Agentic SDLC Playbook v1.0 · Gruvbox dark · Jekyll on GitHub Pages ·
+      <a href="{{ site.repo_url }}">{{ site.repository }}</a>
+    </p>
+    <p>
+      The evidence records, attestations and change ids on this site are produced by this
+      repository&rsquo;s own pipeline against a synthetic payments service. They are not any
+      institution&rsquo;s audit records. Describes an implementation approach and does not
+      constitute legal or regulatory advice.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,5 +1,10 @@
 # Agentic SDLC — runnable reference implementation
 
+**→ [olafkfreund.github.io/agentic-sdlc-showcase](https://olafkfreund.github.io/agentic-sdlc-showcase/)**
+— the stages, the gates, the Substitution Test and the artifact chain, published from
+this tree by [`site/build_pages.py`](site/build_pages.py) so the page cannot drift from
+the repository it describes.
+
 A working implementation of the **[Synechron Agentic SDLC Playbook v1.0](docs/playbook-map.md)**:
 seven stages, five planes, a portable artifact chain, an autonomy matrix, and the
 Substitution Test — as code that runs, gates that refuse, and evidence that is a
@@ -120,6 +125,11 @@ every gate, with a human triaging the queue.
 | Control | [`policy/`](policy/), [`scripts/check_*.py`](scripts/), CODEOWNERS, environments | Advisory layer makes violations rare; the deterministic layer makes them impossible. |
 | Evidence | [`evidence/`](evidence/), [`ops/otel-collector.yaml`](ops/otel-collector.yaml), attestations | Emitted as controls execute. Never reconstructed. |
 
+The public site is [`site/`](site/), built by [`pages.yml`](.github/workflows/pages.yml)
+with the Jekyll engine. The playbook and every artifact page are generated at build time
+from the files on disk, through the same parser the gates use — so the site is not a
+second source of truth.
+
 | Stage | Workflow | Control point |
 |---|---|---|
 | 0 Foundations | [`00-foundations.yml`](.github/workflows/00-foundations.yml) | Substitution Test scored weekly; context plane validated |
@@ -137,9 +147,12 @@ every gate, with a human triaging the queue.
 Two organisation settings shape what the audience sees — both documented in
 [`docs/org-prerequisites.md`](docs/org-prerequisites.md):
 
-- **Copilot code review and the coding agent are not enabled on this org.** Stages 2, 3
-  and 5 fall back to a human. The gates, the chain and the evidence are unaffected, which
-  is itself the point worth making: the control layer depends on no agent.
+- **The Copilot coding agent is invoked by assignment, not by a mention.** `@copilot` in
+  an issue body renders and starts nothing. [`.github/actions/assign-copilot`](.github/actions/assign-copilot/action.yml)
+  assigns the task and then re-reads the assignees to confirm it landed — and where the
+  agent is unavailable it says so plainly instead of reporting a green check for a step
+  that did nothing. The gates, the chain and the evidence are unaffected either way,
+  which is the point worth making: the control layer depends on no agent.
 - **"Allow Actions to create and approve pull requests" is deliberately off.** It is one
   toggle covering both verbs, and this repository will not trade segregation of duties
   for convenience. Stage 6 opens a triage issue with the branch instead, and the loop

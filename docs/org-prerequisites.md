@@ -4,7 +4,9 @@ What this repository needs from the GitHub organisation, what it does without, a
 one setting it deliberately declines.
 
 Everything below was established by running the pipeline against
-`synechron/agentic-sdlc-showcase`, not by reading documentation.
+`olafkfreund/agentic-sdlc-showcase`, not by reading documentation. Where a row changed
+when the repository moved account, the previous finding is kept rather than deleted — a
+prerequisite that was once false is the useful half of this page.
 
 ## Required — nothing works without these
 
@@ -16,28 +18,38 @@ Everything below was established by running the pipeline against
 Both are satisfied here. The repository creator is its admin, so org ownership is not
 needed.
 
-## Currently unavailable in this org
+## Copilot — available here, and how that is checked
+
+### The coding agent
+
+Available. `suggestedActors(capabilities: [CAN_BE_ASSIGNED])` returns the
+`copilot-swe-agent` Bot on this repository, so Stages 2 and 6 hand work to the agent by
+**assigning** it — via `.github/actions/assign-copilot`.
+
+The distinction matters more than it looks. `@copilot` in an issue body is a *mention*:
+it renders, it notifies nobody in particular, and nothing starts. The coding agent starts
+on assignment. A workflow that mentions the agent and reports success is a green check for
+a step that did nothing, which is the failure mode this whole playbook is about — so the
+action re-reads the assignees after the mutation and warns when the assignment did not
+land.
+
+### Where it is not available
+
+The same action degrades honestly: it writes a step summary saying no agent picked the
+issue up, emits a `::warning::`, and exits zero. **A missing advisory layer is not a
+control failure.** The deterministic gates, the artifact chain, the evidence and the
+Substitution Test are entirely unaffected — they are the control layer and they depend on
+no agent. That separation is the design working, not a workaround.
+
+*To enable elsewhere:* Settings → Copilot → Coding agent (repository or organisation),
+and Copilot code review under Copilot → Policies.
 
 ### Copilot code review
 
 `POST /pulls/{n}/requested_reviewers` with `copilot-pull-request-reviewer[bot]` returns
-**HTTP 200 and silently adds no reviewer**. `suggestedActors(capabilities: [CAN_BE_ASSIGNED])`
-returns no Bot, so the **Copilot coding agent** is not enabled either.
-
-`05-review.yml` verifies the reviewer actually landed and reports plainly when it did
-not. It does not fail the build — a missing advisory layer is not a control failure — but
-it does not report success either. **A green check for a control that did not run is
-precisely the failure mode this playbook is about.**
-
-*To enable:* Organisation settings → Copilot → Policies → Copilot code review, and
-Copilot coding agent.
-
-*Impact while disabled:* Stage 2's automatic spec drafting, Stage 3's agent
-implementation and Stage 5's agent review pass all fall back to a human, or to an
-`@copilot` mention in the PR by someone with a seat. **The deterministic gates, the
-artifact chain, the evidence and the Substitution Test are entirely unaffected** — they
-are the control layer and they depend on no agent. That separation is the design working,
-not a workaround.
+**HTTP 200 and silently adds no reviewer** where the feature is off. `05-review.yml`
+therefore verifies the reviewer actually landed and reports plainly when it did not. It
+does not fail the build, and it does not report success either.
 
 ## Deliberately declined
 
@@ -66,7 +78,8 @@ but "what does the tool make you give up in order to do it".
 | Required status checks | Deterministic gates · Build, test, lint · Configuration evals · Substitution Test | §5.4 |
 | `staging` environment | no reviewers — the agent deploys within a policy envelope | Stage 5.6 |
 | `production` environment | required reviewer, `prevent_self_review`, protected branches only | Stage 5.6 |
-| `CODEOWNERS` | control layer needs platform team **and** second line | §8.4 SOD-01 |
+| `CODEOWNERS` | `@olafkfreund`; on adoption, the control layer needs platform team **and** second line | §8.4 SOD-01 |
+| GitHub Pages | built by `pages.yml` with the Jekyll engine, deployed from the `github-pages` environment | — |
 
 `require_last_push_approval` is the quiet one that matters: it means an approval is
 invalidated by the author pushing again, so an agent cannot collect an approval and then

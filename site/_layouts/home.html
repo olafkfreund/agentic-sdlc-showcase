@@ -1,0 +1,32 @@
+---
+layout: default
+---
+<div class="hero">
+  <h1>{{ page.heading }}</h1>
+  <p class="lede">{{ page.lede }}</p>
+  <div class="cta">
+    <a class="btn btn-primary" href="{{ site.repo_url }}">Read the repository ↗</a>
+    <a class="btn" href="{{ '/stages/' | relative_url }}">The seven stages</a>
+    <a class="btn" href="{{ '/gates/' | relative_url }}">The gates that refuse</a>
+  </div>
+
+  <!-- Scores are the ones the repository prints for itself: make substitution,
+       make eval, make negative. Kept here in one place so a stale claim is one
+       edit to correct, and regression-tested against the tree by
+       scripts/tests/test_readme_claims.py. -->
+  <div class="scores">
+    {%- for s in page.scores %}
+    <div class="score">
+      <span class="n">{{ s.value }}</span>
+      <span class="k">{{ s.label }}</span>
+      <span class="note">{{ s.note }}</span>
+    </div>
+    {%- endfor %}
+  </div>
+</div>
+
+<main>
+  <div class="prose">
+    {{ content }}
+  </div>
+</main>

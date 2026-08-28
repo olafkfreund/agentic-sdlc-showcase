@@ -25,7 +25,14 @@ jobs:
 
       # Each gate runs even if an earlier one failed: a reviewer wants every finding
       # in one pass, not one per push.
-      - { name: "SOD-01  codeowners resolve", if: always(), run: python scripts/check_codeowners.py }
+      # GH_TOKEN so this gate reaches GitHub's own CODEOWNERS validator rather than
+      # silently degrading to the offline file check. A rule whose owner does not
+      # resolve is ignored by GitHub, and only the validator sees that.
+      - name: "SOD-01  codeowners resolve"
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/check_codeowners.py
       - { name: "CHG-04  artifact header",   if: always(), run: python scripts/check_artifact_header.py }
       - { name: "HUM-14  autonomy matrix",   if: always(), run: python scripts/check_autonomy.py }
       - { name: "TRC-01  plan conformance",  if: always(), run: python scripts/check_plan_conformance.py }
@@ -53,6 +60,8 @@ jobs:
 
   segregation-of-duties:
     name: "SOD-01  author is not approver"
+    # There is no authorship to check outside a pull request.
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions: { contents: read, pull-requests: read }
     steps:

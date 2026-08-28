@@ -1,0 +1,42 @@
+# GitHub Pages, built with the Jekyll engine (see .github/workflows/pages.yml).
+#
+# The site is generated from this directory plus the repository's own markdown,
+# copied in at build time. Nothing here is a second source of truth: the artifact
+# chain, the playbook and the README are published as they are on disk, so the
+# page and the repository cannot drift.
+title: Agentic SDLC
+tagline: Seven stages, five planes, gates that refuse, evidence as a by-product.
+description: >-
+  A runnable reference implementation of the Agentic SDLC Playbook — the operating
+  model as code that runs, gates that refuse, and evidence that is a by-product
+  rather than a reconstruction.
+repository: olafkfreund/agentic-sdlc-showcase
+repo_url: https://github.com/olafkfreund/agentic-sdlc-showcase
+url: https://olafkfreund.github.io
+baseurl: /agentic-sdlc-showcase
+
+theme_name: Gruvbox dark
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+defaults:
+  - scope: { path: "" }
+    values: { layout: page }
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+
+nav:
+  - { title: Overview,      url: / }
+  - { title: The stages,    url: /stages/ }
+  - { title: The gates,     url: /gates/ }
+  - { title: Substitution,  url: /substitution/ }
+  - { title: Artifact chain, url: /chain/ }
+  - { title: Playbook,      url: /playbook/ }

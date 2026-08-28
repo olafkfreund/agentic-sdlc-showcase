@@ -1,0 +1,52 @@
+# GitHub Pages, built with the Jekyll engine.
+#
+# The site is not a second source of truth. `site/build_pages.py` publishes the
+# playbook and the artifact chain as they are on disk, so a page cannot drift into
+# disagreeing with the repository it describes.
+name: "Pages"
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deployment at a time; queued rather than cancelled, so a push mid-deploy does
+# not leave the site half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      # Derived pages first: the playbook, and one page per artifact in the chain.
+      - run: python site/build_pages.py
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./site
+          destination: ./_site
+      - uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
