@@ -38,5 +38,6 @@ nav:
   - { title: The stages,    url: /stages/ }
   - { title: The gates,     url: /gates/ }
   - { title: Substitution,  url: /substitution/ }
+  - { title: Switch vendor, url: /runtimes/ }
   - { title: Artifact chain, url: /chain/ }
   - { title: Playbook,      url: /playbook/ }

@@ -17,7 +17,7 @@ is invoked in exactly one step per stage. Swapping it is an edit to those steps;
 context, the skills, the policy, the gates and the evidence do not move.
 
 ```
-  Substitution Test    12/12  — portable
+  Substitution Test    12/12  — portable, and re-scored under every agent vendor
   Deterministic gates  12/12  — each proven to refuse, not just to pass
   Evals                24/24  — configuration regression, non-interactive
 ```
@@ -36,6 +36,7 @@ make build test lint gates     # the closed loop plus the control layer
 make substitution              # Appendix C, scored from the repository
 make eval                      # 24 configuration regression cases
 make negative                  # break each protected thing; watch every gate refuse
+make swap                      # switch agent vendor 4 ways; re-score under each
 ```
 
 `make negative` is the one that matters. A gate verified only by passing is
@@ -101,7 +102,35 @@ Twelve checks, executed against the repository rather than self-assessed — not
 a mark for a document that merely claims a property. The check for raw model names scans
 every file in the tree, including the one you are least likely to check.
 
-### 6. The loop closes (§Stage 6)
+### 6. The vendor changes, and nothing else does (§5.2, Appendix C)
+
+```bash
+make swap
+```
+
+```
+  runtime    gates     evals    subst    cost vs HEAD
+  copilot    8/8       24/24    12/12    0+ 0-
+  claude     8/8       24/24    12/12    1+ 1-
+  gemini     8/8       24/24    12/12    1+ 1-
+  codex      8/8       24/24    12/12    1+ 1-
+```
+
+The deterministic gates, the eval suite and the Substitution Test are re-run under each
+runtime. A score that moves under a vendor change is a portability debt, not a refactor,
+and the script exits non-zero if one does.
+
+Two invocation shapes are supported, because they are genuinely different: an identity
+**assigned** in the VCS (Copilot, no provider key) and a hosted **step** taking its
+credential from the gateway (Claude, Gemini, Codex). Both live in
+[`.github/actions/agent-task`](.github/actions/agent-task/action.yml), and Stage 0 fails
+the build if any workflow wires a vendor identifier directly — without that check the
+abstraction rots back into a hard-coded vendor within two quarters.
+
+**No runtime names a model.** A vendor name is a fact about who you buy from; a model name
+pinned in your repository is a migration you have not scheduled yet.
+
+### 7. The loop closes (§Stage 6)
 
 ```bash
 python scripts/detect_anomaly.py
@@ -120,7 +149,7 @@ every gate, with a human triaging the queue.
 | Plane (§5) | Here | The point |
 |---|---|---|
 | Model access | [`.agent/routes.yaml`](.agent/routes.yaml) | Routes, never model names. No provider key outside the gateway. |
-| Agent runtime | [`.github/workflows/`](.github/workflows/) | Copilot, invoked in one step per stage. The most replaceable component. |
+| Agent runtime | [`.agent/runtimes.yaml`](.agent/runtimes.yaml), [`.github/actions/agent-task/`](.github/actions/agent-task/action.yml) | Copilot, Claude, Gemini or Codex. `make swap RUNTIME=<name>` — one line. The most replaceable component, and proven so. |
 | Context | [`AGENTS.md`](AGENTS.md), [`.agent/skills/`](.agent/skills/), [`.agent/mcp-allowlist.yaml`](.agent/mcp-allowlist.yaml) | `.github/copilot-instructions.md` is a five-line pointer, never a source of truth. |
 | Control | [`policy/`](policy/), [`scripts/check_*.py`](scripts/), CODEOWNERS, environments | Advisory layer makes violations rare; the deterministic layer makes them impossible. |
 | Evidence | [`evidence/`](evidence/), [`ops/otel-collector.yaml`](ops/otel-collector.yaml), attestations | Emitted as controls execute. Never reconstructed. |

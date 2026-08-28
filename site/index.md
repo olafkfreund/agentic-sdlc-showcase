@@ -11,6 +11,7 @@ scores:
   - { value: "12/12", label: "Substitution Test", note: "portable — scored from the repository" }
   - { value: "12/12", label: "Deterministic gates", note: "each proven to refuse, not just to pass" }
   - { value: "24/24", label: "Configuration evals", note: "non-interactive regression suite" }
+  - { value: "1 line", label: "To change agent vendor", note: "Copilot, Claude, Gemini or Codex" }
   - { value: "0", label: "Models in the gate", note: "the decision is arithmetic over policy" }
 ---
 
@@ -35,8 +36,8 @@ then runs it. Three things follow from that, and each one is checkable on this s
   <div class="card">
     <span class="tag">Appendix C</span>
     <h3>Survives a change of vendor</h3>
-    <p>Copilot is the agent runtime here, invoked in one step per stage. Swapping it is
-    an edit to those steps. The context, policy, gates and evidence do not move.</p>
+    <p><code>make swap RUNTIME=claude</code> — one line of diff, and the gates, evals
+    and Substitution Test re-score identically under every vendor. Executed, not claimed.</p>
   </div>
 </div>
 
@@ -88,6 +89,11 @@ header, and every gate emits a record keyed to a control id.
     <span class="tag">Appendix C</span>
     <h3><a href="{{ '/substitution/' | relative_url }}">The Substitution Test</a></h3>
     <p>Twelve checks executed against the tree — no marks for a document that claims.</p>
+  </div>
+  <div class="card">
+    <span class="tag">Portability</span>
+    <h3><a href="{{ '/runtimes/' | relative_url }}">Switching the agent vendor</a></h3>
+    <p>Copilot, Claude, Gemini, Codex — one command, and the proof that nothing else moved.</p>
   </div>
   <div class="card">
     <span class="tag">Source</span>
