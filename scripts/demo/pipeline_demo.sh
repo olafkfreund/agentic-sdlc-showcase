@@ -15,7 +15,11 @@
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
-PAUSE=1
+# Staging (colours, act/say/run/beat) is shared with run_demo.sh.
+DEMO_KIND="Pipeline"
+# shellcheck source=scripts/demo/lib.sh
+. "$(dirname "$0")/lib.sh"
+
 OBSERVE=0
 for arg in "$@"; do
   case "$arg" in
@@ -24,55 +28,6 @@ for arg in "$@"; do
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
 done
-
-if [ -t 1 ]; then
-  B=$'\e[1m'; DIM=$'\e[2m'; ORANGE=$'\e[38;5;208m'; GREEN=$'\e[38;5;142m'; RED=$'\e[38;5;167m'; R=$'\e[0m'
-else
-  B=""; DIM=""; ORANGE=""; GREEN=""; RED=""; R=""
-fi
-
-FAILED=0
-ACT=0
-
-act() {
-  ACT=$((ACT + 1))
-  printf '\n%s%s──────────────────────────────────────────────────────────────%s\n' "$ORANGE" "$B" "$R"
-  printf '%s%s  Pipeline %d · %s%s\n' "$ORANGE" "$B" "$ACT" "$1" "$R"
-  printf '%s%s──────────────────────────────────────────────────────────────%s\n\n' "$ORANGE" "$B" "$R"
-  shift
-  for line in "$@"; do printf '  %s%s%s\n' "$DIM" "$line" "$R"; done
-  [ $# -gt 0 ] && echo
-}
-
-say() { printf '  %s%s%s\n\n' "$DIM" "$1" "$R"; }
-
-# The terminal is the artifact here, so what is printed is what the viewer will read.
-# `bash -c` is plumbing for a pipeline the shell cannot express as an argv, and showing
-# it teaches the viewer nothing — so the wrapper is stripped from the display and only
-# from the display. What runs is unchanged.
-show() {
-  if [ "${1:-}" = "bash" ] && [ "${2:-}" = "-c" ]; then
-    printf '  %s$ %s%s\n\n' "$B" "$3" "$R"
-  else
-    printf '  %s$ %s%s\n\n' "$B" "$*" "$R"
-  fi
-}
-
-run() {
-  show "$@"
-  if "$@"; then return 0; fi
-  printf '\n  %sPIPELINE %d FAILED: %s%s\n' "$RED" "$ACT" "$*" "$R"
-  FAILED=1
-  return 1
-}
-
-beat() {
-  [ "$PAUSE" -eq 1 ] || return 0
-  [ -t 0 ] || return 0
-  printf '\n  %s[enter]%s' "$DIM" "$R"
-  read -r _ || true
-  printf '\r                \r'
-}
 
 # ---------------------------------------------------------------------------------
 
@@ -162,9 +117,8 @@ say "Production is a GitHub environment with a required reviewer — the gate is
 run bash -c "gh api 'repos/$REPO/environments' --jq '.environments[]|\"  \(.name): \([.protection_rules[].type]|join(\", \"))\"'"
 beat
 
-printf '\n%s%s──────────────────────────────────────────────────────────────%s\n' "$ORANGE" "$B" "$R"
+closing "The control layer holds in CI, not just on a laptop."
 if [ "$FAILED" -eq 0 ]; then
-  printf '%s%s  The control layer holds in CI, not just on a laptop.%s\n\n' "$GREEN" "$B" "$R"
   cat <<'CLOSING'
   A detector with no model in it raised a finding with no human in the invocation
   path. The agent wrote it up and could go no further. Every gate ran on the diff.
@@ -173,7 +127,5 @@ if [ "$FAILED" -eq 0 ]; then
   None of that depended on which agent vendor was selected.
 
 CLOSING
-else
-  printf '%s%s  A pipeline act failed. Fix it before showing this to anyone.%s\n\n' "$RED" "$B" "$R"
 fi
 exit "$FAILED"

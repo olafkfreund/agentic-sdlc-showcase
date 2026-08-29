@@ -17,7 +17,12 @@ cd "$(dirname "$0")/../.."
 # `[ -x ]` only answers the first, so ask both and fall back once.
 PY="${PY:-.venv/bin/python}"
 command -v "$PY" >/dev/null 2>&1 || [ -x "$PY" ] || PY=python3
-PAUSE=1
+
+# Staging (colours, act/say/run/beat) is shared with pipeline_demo.sh.
+DEMO_KIND="Act"
+# shellcheck source=scripts/demo/lib.sh
+. "$(dirname "$0")/lib.sh"
+
 LIVE=0
 for arg in "$@"; do
   case "$arg" in
@@ -26,45 +31,6 @@ for arg in "$@"; do
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
 done
-
-# Colour only when a human is watching; a redirected log gets clean text.
-if [ -t 1 ]; then
-  B=$'\e[1m'; DIM=$'\e[2m'; ORANGE=$'\e[38;5;208m'; GREEN=$'\e[38;5;142m'; R=$'\e[0m'
-else
-  B=""; DIM=""; ORANGE=""; GREEN=""; R=""
-fi
-
-FAILED=0
-ACT=0
-
-act() {
-  ACT=$((ACT + 1))
-  printf '\n%s%s──────────────────────────────────────────────────────────────%s\n' "$ORANGE" "$B" "$R"
-  printf '%s%s  Act %d · %s%s\n' "$ORANGE" "$B" "$ACT" "$1" "$R"
-  printf '%s%s──────────────────────────────────────────────────────────────%s\n\n' "$ORANGE" "$B" "$R"
-  shift
-  for line in "$@"; do printf '  %s%s%s\n' "$DIM" "$line" "$R"; done
-  [ $# -gt 0 ] && echo
-  return 0
-}
-
-say() { printf '  %s%s%s\n\n' "$DIM" "$1" "$R"; }
-
-run() {
-  printf '  %s$ %s%s\n\n' "$B" "$*" "$R"
-  if "$@"; then return 0; fi
-  printf '\n  %sACT %d FAILED: %s%s\n' "$ORANGE" "$ACT" "$*" "$R"
-  FAILED=1
-  return 1
-}
-
-beat() {
-  [ "$PAUSE" -eq 1 ] || return 0
-  [ -t 0 ] || return 0
-  printf '\n  %s[enter]%s' "$DIM" "$R"
-  read -r _ || true
-  printf '\r                \r'
-}
 
 # ---------------------------------------------------------------------------------
 
@@ -151,9 +117,8 @@ if [ "$LIVE" -eq 1 ]; then
   beat
 fi
 
-printf '\n%s%s──────────────────────────────────────────────────────────────%s\n' "$ORANGE" "$B" "$R"
+closing "Every act passed."
 if [ "$FAILED" -eq 0 ]; then
-  printf '%s%s  Every act passed.%s\n\n' "$GREEN" "$B" "$R"
   cat <<'CLOSING'
   What was demonstrated, and what each part costs to move:
 
@@ -166,7 +131,5 @@ if [ "$FAILED" -eq 0 ]; then
   The agent drafted, proposed and reviewed. It decided nothing.
 
 CLOSING
-else
-  printf '%s%s  An act failed. Fix it before showing this to anyone.%s\n\n' "$ORANGE" "$B" "$R"
 fi
 exit "$FAILED"

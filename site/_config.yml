@@ -15,7 +15,6 @@ repo_url: https://github.com/olafkfreund/agentic-sdlc-showcase
 url: https://olafkfreund.github.io
 baseurl: /agentic-sdlc-showcase
 
-theme_name: Gruvbox dark
 markdown: kramdown
 kramdown:
   input: GFM

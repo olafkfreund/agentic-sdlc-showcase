@@ -26,10 +26,6 @@ demo *ARGS:
 demo-fast:
     @bash scripts/demo/run_demo.sh --fast
 
-# The demo plus the live pipeline on GitHub. Needs `gh auth login`.
-demo-live:
-    @bash scripts/demo/run_demo.sh --live
-
 # The same control layer, watched live in CI. Triggers one Stage 6 run.
 pipeline *ARGS:
     @bash scripts/demo/pipeline_demo.sh {{ ARGS }}
@@ -60,19 +56,11 @@ setup:
     .venv/bin/pip install -q -e '.[dev]'
     @echo "  ready — try: just check"
 
-# Build, test, lint, gates. The four commands AGENTS.md tells the agent to run.
+# There is deliberately no `just test` / `just lint` / `just gates`: they were bare
+# aliases for the same `make` targets and earned nothing. Run `make test` for one, or:
+# Build, test, lint, gates — the four commands AGENTS.md tells the agent to run.
 check:
     @make build test lint gates PY={{ py }}
-
-test:
-    @make test PY={{ py }}
-
-lint:
-    @make lint PY={{ py }}
-
-# The deterministic control layer. No model is consulted in any of it.
-gates:
-    @make gates PY={{ py }}
 
 # ---------------------------------------------------------------- the proofs
 

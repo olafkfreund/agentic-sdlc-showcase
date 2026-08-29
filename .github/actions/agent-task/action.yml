@@ -48,9 +48,6 @@ outputs:
   runtime:
     description: The runtime that was selected.
     value: ${{ steps.select.outputs.runtime }}
-  route:
-    description: The gateway route resolved from the binding.
-    value: ${{ steps.select.outputs.route }}
   invoked:
     description: '"true" when an agent actually took the task.'
     value: ${{ steps.copilot.outputs.invoked || steps.hosted.outputs.invoked }}

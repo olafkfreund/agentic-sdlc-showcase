@@ -6,6 +6,7 @@ lede: >-
   Two recordings: the control layer on a laptop, and the same control layer running
   in CI on a real change. Both are recordings of the actual session — nothing is
   re-typed, simulated, spliced or replayed.
+casts: true
 ---
 
 ## The control layer, in nine acts
@@ -90,24 +91,3 @@ description of the demo, and it would drift from the first.
   A recording tool that quietly produces a shorter recording is the same failure as a gate
   that quietly passes.
 </div>
-
-<!-- jsdelivr, not cdnjs: cdnjs lists the package but serves none of its dist files,
-     which is a 404 that looks like a working page until you open it. Verified by
-     requesting the asset rather than by trusting the URL. -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.css">
-<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.8.0/dist/bundle/asciinema-player.min.js"></script>
-<script>
-  // Rendered client-side so the casts stay plain text in the repository rather than
-  // being baked into a player bundle. Chapter markers come from the cast itself.
-  document.addEventListener('DOMContentLoaded', function () {
-    if (typeof AsciinemaPlayer === 'undefined') return;
-    document.querySelectorAll('.cast').forEach(function (el) {
-      AsciinemaPlayer.create(
-        '{{ site.baseurl }}/assets/casts/' + el.dataset.cast + '.cast',
-        el,
-        { cols: 100, rows: 34, idleTimeLimit: 1.6, fit: 'width',
-          terminalFontSize: '13px', theme: 'gruvbox-dark' }
-      );
-    });
-  });
-</script>
