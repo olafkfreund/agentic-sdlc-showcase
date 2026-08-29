@@ -34,9 +34,12 @@ jobs:
       # warning saying so was the only thing standing between a partial attestation
       # and a green release — which is exactly the failure this repository is about.
       # The released artifact now carries every control policy/controls.yaml declares.
-      - run: make build test lint gates
+      # Order matters: `make gates` bundles the evidence itself as its last step, so
+      # the portability score has to exist before it runs or the bundle is assembled
+      # one control short and says so.
       - run: make eval
       - run: make substitution
+      - run: make build test lint gates
 
       - name: Bundle the gate evidence for the attestation
         run: python scripts/bundle_evidence.py

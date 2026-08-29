@@ -178,8 +178,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+      # Portability is scored before the gates run, because `make gates` bundles the
+      # evidence as its last step and would otherwise annotate the weekly scan with a
+      # missing-control warning every time. A recurring warning that is expected is a
+      # warning people stop reading — the same argument REVIEW.md makes for capping
+      # cosmetic findings.
       - name: Deterministic scan first
-        run: make gates
+        run: |
+          make substitution
+          make gates
       - id: task
         name: Model-driven scan
         env:
