@@ -24,11 +24,19 @@ jobs:
     outputs:
       digest: ${{ steps.digest.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - uses: ./.github/actions/setup
 
+      # `gates` alone leaves TPR-05 with no evidence record, because portability is
+      # scored by scripts/substitution_test.py and the eval runner rather than by a
+      # check_*.py gate. The bundle then attests nine controls out of ten, and the
+      # warning saying so was the only thing standing between a partial attestation
+      # and a green release — which is exactly the failure this repository is about.
+      # The released artifact now carries every control policy/controls.yaml declares.
       - run: make build test lint gates
+      - run: make eval
+      - run: make substitution
 
       - name: Bundle the gate evidence for the attestation
         run: python scripts/bundle_evidence.py
@@ -47,21 +55,21 @@ jobs:
       # statement that the build ran and what it produced. This is where DORA's
       # "prove the control operated continuously" is actually satisfied — and it
       # comes from your own CI, not a vendor's hosted service (Appendix C #12).
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*.whl
 
       # The gate results travel with the artifact, so "which controls ran on the
       # thing that is in production" is answerable from the artifact alone.
       - name: Attest the gate results
-        uses: actions/attest@v2
+        uses: actions/attest@v4
         with:
           subject-path: dist/*.whl
           predicate-type: https://olafkfreund.github.io/agentic-sdlc-showcase/attestations/v1
           predicate-path: evidence/bundle.json
 
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: dist, path: dist/ }
 
   staging:
@@ -70,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging          # policy envelope; no human in the path
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: dist, path: dist/ }
       - run: echo "Deployed ${{ needs.build.outputs.digest }} to staging."
 
@@ -85,7 +93,7 @@ jobs:
       name: production
       url: https://payments.example.com
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: dist, path: dist/ }
       - name: Record the release
         run: |

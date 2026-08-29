@@ -19,7 +19,7 @@ jobs:
       GATE_BASE_REF: origin/${{ github.base_ref || 'main' }}
       TARGET_ENVIRONMENT: development
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - uses: ./.github/actions/setup
 
@@ -54,7 +54,7 @@ jobs:
               fh.write("## Deterministic gates\n\n| | Control | Gate | Findings |\n|---|---|---|---|\n")
               fh.write(rows + "\n")
           PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with: { name: evidence-gates, path: evidence/ }
 
@@ -68,7 +68,7 @@ jobs:
       # Structural, not procedural: the identity that authored the change cannot
       # approve it. Branch protection enforces the approval; this records the
       # evidence and catches a self-approval that a ruleset misconfiguration let through.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - name: Check approvals against authorship
         env:

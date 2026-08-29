@@ -16,7 +16,7 @@ jobs:
     name: Substitution Test (Appendix C)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - uses: ./.github/actions/setup
 
@@ -108,6 +108,6 @@ jobs:
           sys.exit(1 if missing else 0)
           PY
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with: { name: evidence-foundations, path: evidence/ }

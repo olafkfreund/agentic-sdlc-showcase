@@ -20,7 +20,7 @@ jobs:
     if: "!github.event.pull_request.draft"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
 
       # The agent runtime is the replaceable component (§5.2). Which reviewer identity
@@ -95,7 +95,7 @@ jobs:
     name: Review passes (REVIEW.md)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - uses: ./.github/actions/setup
 
@@ -107,6 +107,6 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
         run: python scripts/review_tally.py --pr "$PR"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with: { name: evidence-review, path: evidence/ }

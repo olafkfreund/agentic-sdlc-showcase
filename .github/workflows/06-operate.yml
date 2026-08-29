@@ -28,7 +28,7 @@ jobs:
       rules: ${{ steps.detect.outputs.rules }}
       suspect_deploy: ${{ steps.detect.outputs.suspect_deploy }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       # Deterministic, version-controlled, unit-tested. NO MODEL IN DETECTION.
       # A model that decides whether something is anomalous is a control you
@@ -36,7 +36,7 @@ jobs:
       - run: python -m pytest scripts/tests/test_detect_anomaly.py -q
       - id: detect
         run: python scripts/detect_anomaly.py --metrics "${{ inputs.metrics || 'ops/fixtures/post_deploy_error_rate.json' }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with: { name: evidence-detection, path: evidence/ }
 
@@ -48,8 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions: { contents: read, issues: write }
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with: { name: evidence-detection, path: evidence/ }
       - id: task
         name: Open a read-only diagnosis issue for the agent
@@ -106,12 +106,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions: { contents: write, pull-requests: write, issues: write }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       # Each job is a fresh runner, so the detection evidence travels as an artifact.
       # It is also what the resulting intent quotes verbatim, which is the point:
       # the finding and the artifact derive from the same record.
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: evidence-detection, path: evidence/ }
 
       # The agent writes its diagnosis as an intent.md in the Stage 1 format, and
@@ -176,7 +176,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: { contents: read, issues: write }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - name: Deterministic scan first
         run: make gates
