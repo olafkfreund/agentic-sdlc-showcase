@@ -148,6 +148,10 @@ def main() -> int:
     if out := __import__("os").environ.get("GITHUB_OUTPUT"):
         with open(out, "a") as fh:
             fh.write(f"tier={result['tier']}\naction={action}\n")
+            # The metric name, so the workflow can ask whether this excursion is already
+            # tracked before raising a second finding for it. Computed here already; it
+            # simply was not emitted, and the cost of that was three identical findings.
+            fh.write(f"metric={result['metric']}\n")
             fh.write(f"sigma={result['latest_sigma']}\n")
             fh.write(f"rules={'; '.join(result['rules_fired'])}\n")
             suspect = result.get("suspect_deploy") or {}

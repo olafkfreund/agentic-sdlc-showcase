@@ -21,12 +21,16 @@ jobs:
   detect:
     name: Detect (no model)
     runs-on: ubuntu-latest
+    # `issues: read` and not write. Detection looks; the jobs already permitted to raise a
+    # finding are the ones that write one.
+    permissions: { contents: read, issues: read }
     outputs:
       tier: ${{ steps.detect.outputs.tier }}
       action: ${{ steps.detect.outputs.action }}
       sigma: ${{ steps.detect.outputs.sigma }}
       rules: ${{ steps.detect.outputs.rules }}
       suspect_deploy: ${{ steps.detect.outputs.suspect_deploy }}
+      existing_finding: ${{ steps.tracked.outputs.existing_finding }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
@@ -36,6 +40,48 @@ jobs:
       - run: python -m pytest scripts/tests/test_detect_anomaly.py -q
       - id: detect
         run: python scripts/detect_anomaly.py --metrics "${{ inputs.metrics || 'ops/fixtures/post_deploy_error_rate.json' }}"
+      # Is this excursion already being tracked? Asked once, here, because both the 2-sigma
+      # and 3-sigma paths raise findings and asking in each is the same lookup twice.
+      #
+      # An anomaly that lasts a fortnight is one finding, not fourteen. Three identical
+      # 6.926 sigma findings were filed and dismissed together before this step existed, and
+      # left alone this produces a finding, a branch and a change id every night for one
+      # unfixed problem. A report that arrives every morning stops being read, which is
+      # ASI09 in section 8.5 — the control fails while the detector stays perfect.
+      #
+      # Deterministic and narrow on purpose: the `stage-6` label plus the metric name in the
+      # title. No scoring, no model deciding whether two findings are the same — that would
+      # put a judgement call inside detection, which principle 4 forbids.
+      #
+      # Matches OPEN issues only, so closing a finding re-arms the detector. Suppression
+      # that cannot re-arm is silence.
+      - id: tracked
+        name: Already tracked?
+        env:
+          GH_TOKEN: ${{ github.token }}
+          METRIC: ${{ steps.detect.outputs.metric }}
+        run: |
+          # Fails open. If this lookup cannot run, the finding is raised: a duplicate is an
+          # annoyance, a suppressed real anomaly is worse than the problem being fixed.
+          FOUND=$(gh issue list --state open --label stage-6 \
+                    --json number,title \
+                    --jq "[.[] | select(.title | contains(\"$METRIC\"))] | .[0].number // empty" \
+                  2>/dev/null || echo "")
+          echo "existing_finding=${FOUND}" >> "$GITHUB_OUTPUT"
+          if [ -n "$FOUND" ]; then
+            echo "::notice::${METRIC} is already tracked by #${FOUND}; not raising a duplicate."
+            {
+              echo "### Suppressed as a duplicate"
+              echo ""
+              echo "\`${METRIC}\` breached at ${{ steps.detect.outputs.sigma }} sigma and is already"
+              echo "tracked by **#${FOUND}**, so no second finding was raised."
+              echo ""
+              echo "Close #${FOUND} to re-arm: the next breach after that opens a new finding."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "no open finding for ${METRIC}; this one gets raised."
+          fi
+
       - uses: actions/upload-artifact@v7
         if: always()
         with: { name: evidence-detection, path: evidence/ }
@@ -44,7 +90,8 @@ jobs:
     # 2 sigma: the agent may look, and may not touch. A0, read-only tools.
     name: Diagnose (2 sigma, A0 read-only)
     needs: detect
-    if: needs.detect.outputs.action == 'diagnose'
+    # Suppressed where the excursion is already tracked by an open finding.
+    if: needs.detect.outputs.action == 'diagnose' && needs.detect.outputs.existing_finding == ''
     runs-on: ubuntu-latest
     permissions: { contents: read, issues: write }
     steps:
@@ -102,7 +149,8 @@ jobs:
     # or triggering a pre-approved runbook. It has no production write access.
     name: Propose (3 sigma, A2 via PR)
     needs: detect
-    if: needs.detect.outputs.action == 'propose'
+    # Suppressed where the excursion is already tracked by an open finding.
+    if: needs.detect.outputs.action == 'propose' && needs.detect.outputs.existing_finding == ''
     runs-on: ubuntu-latest
     permissions: { contents: write, pull-requests: write, issues: write }
     steps:

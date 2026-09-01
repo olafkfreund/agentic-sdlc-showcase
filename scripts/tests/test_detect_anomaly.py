@@ -139,3 +139,27 @@ def test_the_shipped_fixture_names_a_suspect_deploy():
 def test_evaluate_without_deploys_still_works():
     """Additive: the existing callers pass no markers and must be unaffected."""
     assert d.evaluate(STABLE, [10.0, 10.0, 40.0])["suspect_deploy"] is None
+
+
+def test_github_output_carries_the_metric_name(tmp_path, monkeypatch):
+    """The workflow branches on these keys, so they are an interface, not a debug print.
+
+    `metric` is the one the dedupe lookup needs: without it the workflow cannot ask whether
+    this excursion is already tracked, and raises a fresh finding every night. Three
+    identical 6.926 sigma findings were filed before this key existed.
+    """
+    import detect_anomaly
+
+    out = tmp_path / "gh_output"
+    out.write_text("")
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    monkeypatch.setattr(
+        "sys.argv",
+        ["detect_anomaly.py", "--metrics", "ops/fixtures/post_deploy_error_rate.json"],
+    )
+    detect_anomaly.main()
+
+    emitted = dict(line.split("=", 1) for line in out.read_text().splitlines() if "=" in line)
+    assert emitted["metric"] == "post_deploy_error_rate"
+    # The rest of the interface, so a rename shows up here rather than in a silent workflow.
+    assert {"tier", "action", "sigma", "rules", "suspect_deploy"} <= emitted.keys()
