@@ -16,6 +16,33 @@ scores:
 casts: true
 ---
 
+## The whole argument, on one whiteboard
+
+<figure class="infographic">
+  <a href="{{ '/assets/img/governing-software-in-the-age-of-ai.webp' | relative_url }}">
+    <img src="{{ '/assets/img/governing-software-in-the-age-of-ai.webp' | relative_url }}"
+         width="2752" height="1536" loading="lazy" decoding="async"
+         alt="Hand-drawn whiteboard infographic titled 'The Agentic SDLC: Governing Software in the
+              Age of AI'. Across the top, traditional SDLC and human review as promises and
+              checklists are crossed out and replaced by system verification, drawn as a turnstile a
+              robot must pass. To the right, the portable architecture runs intent, spec, plan and
+              code along a chain into git, labelled an immutable automatic audit trail, beside
+              vendor-neutral standards AGENTS.md and MCP. Lower left, the Substitution Test asks
+              whether you could switch AI vendors over a weekend and have identical audit evidence by
+              Monday morning, next to a productivity J-curve showing AI as an amplifier. Lower right,
+              a table maps planes of architecture to their role and key asset, and an autonomy matrix
+              grids risk against environment.">
+  </a>
+  <figcaption>
+    Click through for full resolution.
+    <strong>AI-generated with Google NotebookLM</strong> from the playbook text, and one thing in it
+    is wrong: it maps <em>three</em> planes, and
+    <a href="{{ '/playbook/' | relative_url }}">§5</a> has <strong>five</strong> — Agent Runtime and
+    Evidence are missing. Published with the gap named rather than quietly reproduced. The playbook
+    is the source of truth; this is a way in.
+  </figcaption>
+</figure>
+
 ## Sixteen seconds, and nothing in it is staged
 
 The nine acts of the control layer, recorded as they ran. The act to watch is **the gates
