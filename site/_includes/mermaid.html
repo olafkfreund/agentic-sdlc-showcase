@@ -13,6 +13,10 @@
   textContent (which discards any <span> rouge injected) and handed to mermaid in the shape
   it expects. One authored form, two renderers, no second copy of the diagram.
 
+  The source is kept on the element after rendering, because a diagram is baked into an
+  <svg> with its colours resolved and cannot be re-themed in place. Switching theme
+  re-renders it from that stored text.
+
   Pinned to an exact version and verified by requesting the asset, not by trusting the URL:
   cdnjs lists asciinema-player and serves none of its dist files, which cost this site two
   empty boxes before anyone opened the page.
@@ -20,53 +24,66 @@
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.esm.min.mjs';
 
-  // Gruvbox dark, so a diagram does not arrive as a white rectangle in a dark page.
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: 'base',
-    securityLevel: 'strict',
-    fontFamily: 'ui-monospace, "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace',
-    themeVariables: {
-      background: '#282828',
-      primaryColor: '#3c3836',
-      primaryTextColor: '#ebdbb2',
-      primaryBorderColor: '#fe8019',
-      secondaryColor: '#504945',
-      secondaryTextColor: '#ebdbb2',
-      secondaryBorderColor: '#83a598',
-      tertiaryColor: '#1d2021',
-      tertiaryTextColor: '#d5c4a1',
-      tertiaryBorderColor: '#665c54',
-      lineColor: '#a89984',
-      textColor: '#ebdbb2',
-      mainBkg: '#3c3836',
-      nodeBorder: '#fe8019',
-      clusterBkg: '#1d2021',
-      clusterBorder: '#504945',
-      titleColor: '#fabd2f',
-      edgeLabelBackground: '#282828',
-      fontSize: '14px',
+  // Gruvbox, matching whichever palette the page is currently wearing. The light accents are
+  // Pertsev's published light values rather than the dark ones lightened, for the same reason
+  // the stylesheet keeps two palettes: an inverted accent is a colour nobody can read.
+  const PALETTES = {
+    dark: {
+      background: '#282828', primaryColor: '#3c3836', primaryTextColor: '#ebdbb2',
+      primaryBorderColor: '#fe8019', secondaryColor: '#504945', secondaryTextColor: '#ebdbb2',
+      secondaryBorderColor: '#83a598', tertiaryColor: '#1d2021', tertiaryTextColor: '#d5c4a1',
+      tertiaryBorderColor: '#665c54', lineColor: '#a89984', textColor: '#ebdbb2',
+      mainBkg: '#3c3836', nodeBorder: '#fe8019', clusterBkg: '#1d2021',
+      clusterBorder: '#504945', titleColor: '#fabd2f', edgeLabelBackground: '#282828',
     },
-  });
+    light: {
+      background: '#fbf1c7', primaryColor: '#ebdbb2', primaryTextColor: '#3c3836',
+      primaryBorderColor: '#af3a03', secondaryColor: '#d5c4a1', secondaryTextColor: '#3c3836',
+      secondaryBorderColor: '#076678', tertiaryColor: '#f9f5d7', tertiaryTextColor: '#504945',
+      tertiaryBorderColor: '#bdae93', lineColor: '#7c6f64', textColor: '#3c3836',
+      mainBkg: '#ebdbb2', nodeBorder: '#af3a03', clusterBkg: '#f9f5d7',
+      clusterBorder: '#d5c4a1', titleColor: '#b57614', edgeLabelBackground: '#fbf1c7',
+    },
+  };
 
+  // Lift each fence out of rouge's markup, once, keeping the source for re-rendering.
   document.querySelectorAll('.language-mermaid, pre > code.language-mermaid').forEach((el) => {
     const code = el.matches('code') ? el : el.querySelector('code');
     if (!code) return;
-    // The block that gets replaced is the outermost rouge wrapper where there is one,
-    // otherwise the <pre>. Replacing the <code> alone would leave the highlighter's
-    // chrome wrapped around the finished diagram.
+    // Replace the outermost rouge wrapper where there is one, otherwise the <pre>.
+    // Replacing the <code> alone leaves the highlighter's chrome around the diagram.
     const block = el.matches('code') ? el.parentElement : el;
     const host = document.createElement('pre');
     host.className = 'mermaid';
     host.textContent = code.textContent;
+    host.dataset.src = code.textContent;
     block.replaceWith(host);
   });
 
-  // A diagram that fails to parse must not take the page down with it, and must say so
-  // rather than leaving a silent gap — the same argument the gates make about passing quietly.
-  try {
-    await mermaid.run({ querySelector: 'pre.mermaid' });
-  } catch (err) {
-    console.error('[mermaid] diagram failed to render:', err);
+  async function render() {
+    const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      securityLevel: 'strict',
+      fontFamily: 'ui-monospace, "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace',
+      themeVariables: { fontSize: '14px', ...PALETTES[theme] },
+    });
+    // Restore the source and clear mermaid's done-marker, or run() skips the element and the
+    // diagram keeps the colours of the theme it was first drawn in.
+    document.querySelectorAll('pre.mermaid').forEach((el) => {
+      el.textContent = el.dataset.src;
+      el.removeAttribute('data-processed');
+    });
+    // A diagram that fails to parse must not take the page down with it, and must say so
+    // rather than leaving a silent gap — the argument the gates make about passing quietly.
+    try {
+      await mermaid.run({ querySelector: 'pre.mermaid' });
+    } catch (err) {
+      console.error('[mermaid] diagram failed to render:', err);
+    }
   }
+
+  await render();
+  document.addEventListener('themechange', render);
 </script>

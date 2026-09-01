@@ -1,11 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% if page.title and page.url != "/" %}{{ page.title }} · {{ site.title }}{% else %}{{ site.title }} — {{ site.tagline }}{% endif %}</title>
   <meta name="description" content="{{ page.description | default: site.description | strip_newlines }}">
-  <meta name="theme-color" content="#1d2021">
+  <meta name="theme-color" content="#1d2021" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f9f5d7" media="(prefers-color-scheme: light)">
+  <!-- Runs before the stylesheet so the page paints in the right theme the first time.
+       Deferring this to the end of the body produces a flash of dark before light, which is
+       the single thing that makes a theme switch feel broken.
+
+       The OS preference is resolved here rather than in a CSS media query, so the stylesheet
+       only ever answers "dark or light" and each palette is written once. `.no-js` is
+       removed immediately, which is how the toggle stays hidden where it could not work. -->
+  <script>
+    (function () {
+      var el = document.documentElement;
+      try {
+        var t = localStorage.getItem('theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        el.setAttribute('data-theme', t);
+      } catch (e) {
+        // Private mode, or storage blocked. Dark is the site's default identity.
+        el.setAttribute('data-theme', 'dark');
+      }
+      el.classList.remove('no-js');
+    })();
+  </script>
   <!-- Shared into Slack, Teams or LinkedIn, this is the whole first impression. The
        home page's `title` is its nav label ("Overview"), which is useless as a preview,
        so the site title is used there and the page title everywhere else. -->
@@ -36,6 +60,11 @@
       <a href="{{ item.url | relative_url }}"{% if page.url == item.url %} class="current"{% endif %}>{{ item.title }}</a>
       {%- endfor %}
       <a href="{{ site.repo_url }}">GitHub&nbsp;↗</a>
+      <button class="theme-toggle" type="button" aria-live="polite"
+              aria-label="Switch to light theme" title="Switch to light theme">
+        <svg class="to-light" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 12.5zm0-11A.75.75 0 0 1 8.75 2.25v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 1.5zM2.25 7.25h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5zm10 0h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5zM3.28 3.28a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 0 1-1.06 1.06L3.28 4.34a.75.75 0 0 1 0-1.06zm7.32 7.32a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.06l-1.06-1.06a.75.75 0 0 1 0-1.06zm2.12-7.32a.75.75 0 0 1 0 1.06l-1.06 1.06a.75.75 0 1 1-1.06-1.06l1.06-1.06a.75.75 0 0 1 1.06 0zM5.4 10.6a.75.75 0 0 1 0 1.06l-1.06 1.06a.75.75 0 0 1-1.06-1.06L4.34 10.6a.75.75 0 0 1 1.06 0z"/></svg>
+        <svg class="to-dark" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.86A5.5 5.5 0 0 1 6.14 2.5a.75.75 0 0 0-.93-.95 7 7 0 1 0 9.24 9.24.75.75 0 0 0-.95-.93z"/></svg>
+      </button>
     </nav>
   </div>
 </header>
@@ -45,7 +74,7 @@
 <footer class="page">
   <div class="inner">
     <p>
-      Built from the Agentic SDLC Playbook v1.1 · Gruvbox dark · Jekyll on GitHub Pages ·
+      Built from the Agentic SDLC Playbook v1.1 · Gruvbox · Jekyll on GitHub Pages ·
       <a href="{{ site.repo_url }}">{{ site.repository }}</a>
     </p>
     <p>
@@ -56,6 +85,30 @@
     </p>
   </div>
 </footer>
+
+<script>
+  // The toggle. Announces a `themechange` event rather than knowing what else on the page
+  // cares — the mermaid bootstrap listens for it to re-render, and anything added later can
+  // do the same without this script growing a list of dependants.
+  (function () {
+    var btn = document.querySelector('.theme-toggle');
+    if (!btn) return;
+    function label(now) {
+      var next = now === 'light' ? 'dark' : 'light';
+      var text = 'Switch to ' + next + ' theme';
+      btn.setAttribute('aria-label', text);
+      btn.setAttribute('title', text);
+    }
+    label(document.documentElement.getAttribute('data-theme'));
+    btn.addEventListener('click', function () {
+      var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) { /* choice lasts this page only */ }
+      label(next);
+      document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: next } }));
+    });
+  })();
+</script>
 
 {%- if page.casts %}{% include player.html %}{% endif %}
 {%- if page.mermaid %}{% include mermaid.html %}{% endif %}
