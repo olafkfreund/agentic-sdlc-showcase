@@ -33,6 +33,11 @@ def front_matter(**fields: object) -> str:
     for key, value in fields.items():
         if value is None:
             continue
+        if isinstance(value, bool):
+            # Python's str() gives `True`, which YAML 1.1 does accept — but relying on that
+            # is a needless bet on the parser. Emit what the spec actually asks for.
+            lines.append(f"{key}: {str(value).lower()}")
+            continue
         text = str(value).replace('"', "'")
         lines.append(f'{key}: "{text}"' if isinstance(value, str) else f"{key}: {value}")
     lines.append("---\n")
@@ -51,8 +56,11 @@ def write_playbook() -> None:
             layout="page",
             title="The Agentic SDLC Playbook",
             permalink="/playbook/",
-            lede="The v1.0 text this repository implements, published as it is on disk.",
+            lede="The v1.1 text this repository implements, published as it is on disk.",
             source=source.name,
+            # The playbook is the one page carrying ```mermaid fences. They render natively
+            # on github.com; here they need the bootstrap in _includes/mermaid.html.
+            mermaid=True,
         )
         + body
     )

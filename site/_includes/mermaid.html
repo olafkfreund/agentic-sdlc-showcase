@@ -1,0 +1,72 @@
+{%- comment -%}
+  Mermaid bootstrap. Included by any page whose front matter sets `mermaid: true`, matching
+  how player.html is included on `casts: true`.
+
+  Why a shim is needed. The diagrams are authored as ```mermaid fences so that they also
+  render natively when the playbook is read on github.com. This site is kramdown + rouge
+  with no mermaid plugin, which turns that fence into
+
+      <div class="language-mermaid highlighter-rouge"><div class="highlight">
+        <pre class="highlight"><code>…</code></pre></div></div>
+
+  — a syntax-highlighted code block, not a diagram. So the source is lifted out with
+  textContent (which discards any <span> rouge injected) and handed to mermaid in the shape
+  it expects. One authored form, two renderers, no second copy of the diagram.
+
+  Pinned to an exact version and verified by requesting the asset, not by trusting the URL:
+  cdnjs lists asciinema-player and serves none of its dist files, which cost this site two
+  empty boxes before anyone opened the page.
+{%- endcomment -%}
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.esm.min.mjs';
+
+  // Gruvbox dark, so a diagram does not arrive as a white rectangle in a dark page.
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    securityLevel: 'strict',
+    fontFamily: 'ui-monospace, "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace',
+    themeVariables: {
+      background: '#282828',
+      primaryColor: '#3c3836',
+      primaryTextColor: '#ebdbb2',
+      primaryBorderColor: '#fe8019',
+      secondaryColor: '#504945',
+      secondaryTextColor: '#ebdbb2',
+      secondaryBorderColor: '#83a598',
+      tertiaryColor: '#1d2021',
+      tertiaryTextColor: '#d5c4a1',
+      tertiaryBorderColor: '#665c54',
+      lineColor: '#a89984',
+      textColor: '#ebdbb2',
+      mainBkg: '#3c3836',
+      nodeBorder: '#fe8019',
+      clusterBkg: '#1d2021',
+      clusterBorder: '#504945',
+      titleColor: '#fabd2f',
+      edgeLabelBackground: '#282828',
+      fontSize: '14px',
+    },
+  });
+
+  document.querySelectorAll('.language-mermaid, pre > code.language-mermaid').forEach((el) => {
+    const code = el.matches('code') ? el : el.querySelector('code');
+    if (!code) return;
+    // The block that gets replaced is the outermost rouge wrapper where there is one,
+    // otherwise the <pre>. Replacing the <code> alone would leave the highlighter's
+    // chrome wrapped around the finished diagram.
+    const block = el.matches('code') ? el.parentElement : el;
+    const host = document.createElement('pre');
+    host.className = 'mermaid';
+    host.textContent = code.textContent;
+    block.replaceWith(host);
+  });
+
+  // A diagram that fails to parse must not take the page down with it, and must say so
+  // rather than leaving a silent gap — the same argument the gates make about passing quietly.
+  try {
+    await mermaid.run({ querySelector: 'pre.mermaid' });
+  } catch (err) {
+    console.error('[mermaid] diagram failed to render:', err);
+  }
+</script>

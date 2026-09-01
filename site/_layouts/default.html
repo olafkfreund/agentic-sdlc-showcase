@@ -45,7 +45,7 @@
 <footer class="page">
   <div class="inner">
     <p>
-      Built from the Agentic SDLC Playbook v1.0 · Gruvbox dark · Jekyll on GitHub Pages ·
+      Built from the Agentic SDLC Playbook v1.1 · Gruvbox dark · Jekyll on GitHub Pages ·
       <a href="{{ site.repo_url }}">{{ site.repository }}</a>
     </p>
     <p>
@@ -58,6 +58,7 @@
 </footer>
 
 {%- if page.casts %}{% include player.html %}{% endif %}
+{%- if page.mermaid %}{% include mermaid.html %}{% endif %}
 
 </body>
 </html>

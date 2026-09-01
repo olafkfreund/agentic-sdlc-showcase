@@ -5,7 +5,7 @@
 this tree by [`site/build_pages.py`](site/build_pages.py) so the page cannot drift from
 the repository it describes.
 
-A working implementation of the **[Agentic SDLC Playbook v1.0](docs/playbook-map.md)**:
+A working implementation of the **[Agentic SDLC Playbook v1.1](docs/playbook-map.md)**:
 seven stages, five planes, a portable artifact chain, an autonomy matrix, and the
 Substitution Test — as code that runs, gates that refuse, and evidence that is a
 by-product rather than a reconstruction.
@@ -225,5 +225,5 @@ than duplicating it), and there is no live gateway or deployment target here.
 
 ---
 
-*A reference implementation of the Agentic SDLC Playbook v1.0. Describes an implementation
+*A reference implementation of the Agentic SDLC Playbook v1.1. Describes an implementation
 approach and does not constitute legal or regulatory advice.*

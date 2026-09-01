@@ -171,6 +171,22 @@ pre {
 }
 pre code { background: none; color: var(--fg2); padding: 0; font-size: inherit; }
 
+/* A rendered diagram is a picture, not a listing: drop the code-block chrome and centre it.
+   Only once the <svg> has actually landed, though. Until then `pre.mermaid` still holds its
+   own source, and that source stays styled as the code block it is and stays *visible* — if
+   the CDN is blocked or scripts are off, a reader gets the diagram as legible text instead
+   of an empty gap. Hiding it until render would look tidier and fail silently, which is the
+   trade this repository argues against everywhere else. */
+pre.mermaid:has(svg) {
+  background: none;
+  border: none;
+  padding: 0.5rem 0;
+  margin: 1.6rem 0;
+  text-align: center;
+  line-height: normal;
+}
+pre.mermaid svg { max-width: 100%; height: auto; }
+
 /* tables scroll inside themselves; the page never scrolls sideways */
 table {
   display: block;

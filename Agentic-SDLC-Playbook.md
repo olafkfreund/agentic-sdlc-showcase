@@ -2,11 +2,91 @@
 
 ## A model-agnostic operating model for regulated enterprises
 
-Version 1.0 · August 2026
+Version 1.1 · September 2026
+
+---
+
+## Who should read what
+
+This document serves three audiences and none of them needs all of it.
+
+| If you are | Read | Roughly |
+|---|---|---|
+| A board member, executive or business sponsor | *In plain terms* below, then §1, §3 and §10 | 15 minutes |
+| In risk, audit, compliance or second line | §1, §3, §8, and Appendix C as a scoring sheet | 40 minutes |
+| An engineer, architect or platform owner | §4–§7 and Appendices A, B, E | the lot |
+
+Appendix E is a glossary. Nothing in this document requires you to already know what MCP,
+an attestation or a blast radius is.
+
+---
+
+## In plain terms
+
+*This page assumes no technical background. Everything after it assumes a little.*
+
+Software used to be written by people, one line at a time. Increasingly it is written by
+**AI agents** — programs that are told a goal, then read a codebase, write changes and run
+tests largely on their own, in minutes rather than weeks.
+
+This creates a problem that is not really about technology.
+
+Every organisation that builds software has controls around it: someone specifies the work,
+someone writes it, someone else reviews it, someone approves the release. In a regulated
+firm those controls are written down, tested by internal audit, and shown to supervisors.
+Almost all of them rest on an assumption that has quietly stopped being true — **that a
+qualified person wrote every line and another qualified person read it.**
+
+When an agent writes most of a change, that sentence is no longer a true description of what
+happened. The control has not failed, exactly. It has stopped describing reality, and a
+control that does not describe reality provides no assurance to anyone.
+
+The instinct is to review harder. That does not work, because the volume of change goes up
+at the same moment the reviewing capacity stays flat.
+
+**What this document proposes instead** is to move the checking out of the review meeting and
+into the machinery. Not "a person confirms this was safe" but "the system would not have let
+it through otherwise" — and it keeps the receipt automatically, as it goes, rather than
+someone assembling a folder of proof three weeks later when a supervisor asks.
+
+### One picture to carry through the rest
+
+> **An agent is a very fast contractor who has never seen your building and has no site pass.**
+
+Everything this document describes is one of the things you would already do about such a
+contractor:
+
+| The contractor | The agent | Where |
+|---|---|---|
+| The site induction — how this building works, where not to go | Written context, in a file called `AGENTS.md` | §5.3 |
+| The method statements — how we do this task here, safely | *Skills*, written once and applied every time | §5.3 |
+| The security desk that issues the pass, and can revoke it | A **gateway** every AI request goes through | §5.1 |
+| Which doors the pass actually opens | The **autonomy matrix** — more freedom in test, less in production | §8.3 |
+| The building inspector who signs off the work | Automatic **gates** that refuse a change that breaks a rule | §5.4 |
+| The signed inspection certificate, kept on file | **Evidence**, produced as the work happens | §5.5 |
+
+The last two are where this differs from most advice. The inspector is not an AI — it is
+ordinary, boring, predictable code, because *"the AI checked it"* is not an answer anybody
+can audit (§4, principle 4). And the certificate is written by the inspection itself, so
+producing evidence is never a separate project that runs late (§4, principle 5).
+
+### The one question this document is built around
+
+There is a version of this argument for engineers in §1, but for a board it reduces to a
+single procurement question:
+
+> **If you had to change AI supplier, could you do it over a weekend — and would your
+> controls and your audit trail be exactly the same on Monday morning?**
+
+If the answer is no, then your software change process now depends on one vendor, and under
+EU financial regulation you owe your supervisor a credible plan for leaving that vendor
+(§3). Appendix C turns that question into twelve things you can check and score.
 
 ---
 
 ## 1. Executive summary
+
+*What this document proposes, and the one test it is built around.*
 
 Code generation is no longer the constraint. The lifecycle around it is.
 
@@ -35,23 +115,45 @@ Section 11 sets out how this model is designed, built and operated inside regula
 
 ## 2. The bottleneck has moved
 
+*Making the writing of code faster does not make software delivery faster. It moves the queue.*
+
 A traditional SDLC allocates its ceremony where the cost sits. Requirements workshops, estimation, design review, security review and change approval all exist to force alignment ahead of a build phase measured in weeks or months. When the build phase drops to hours, three things happen at once.
 
 **The constraint relocates.** It moves to whatever is immediately upstream and downstream of build — intake, review, approval, release. Those still run at human speed, and they now run against several times the volume.
 
-**Controls stop describing reality.** "A qualified engineer reviewed every line" was a defensible statement when a person wrote every line. Once an agent produces the majority of a diff, the same statement is either untrue or so thinly true that it provides no assurance. Industry telemetry puts AI-generated or AI-assisted code at roughly a third of new enterprise code and rising.
+**Controls stop describing reality.** "A qualified engineer reviewed every line" was a defensible statement when a person wrote every line. Once an agent produces the majority of a diff, the same statement is either untrue or so thinly true that it provides no assurance. DORA's 2026 research puts AI use among technology professionals at around 90%, with over 80% reporting it has increased their productivity — so this is no longer a question of whether the control narrative has drifted, only of how far.
+
+**Code quality moves in the wrong direction unless something holds it.** GitClear's longitudinal analysis reports duplicated code blocks rising roughly 81% against a 2023 baseline to the highest level on record, within-commit copy/paste up around 41%, error-masking constructs up around 47%, and two-week code churn roughly doubling. 2024 was the first year on record in which copy/paste exceeded refactoring. These are the signatures of code written without awareness of the codebase around it — and they are cumulative, which means the cost arrives quarters after the speed does.
 
 **Exception handling becomes the dominant cost.** Governance forums that meet weekly or monthly cannot absorb a tenfold increase in changes needing a decision. Teams respond by batching changes, which reintroduces exactly the large, risky release the last decade of DevOps work removed.
 
-For financial services there is a fourth pressure. Supervisors have moved from accepting point-in-time attestation to expecting demonstrable, continuous control operation. DORA has been in full application since January 2025 and national competent authorities are in active supervision. Industry surveys report that roughly half of organisations still need a week or more to produce compliance audit proof on request. At agentic change volumes, an evidence process that takes a week is not a process.
+For financial services there is a fourth pressure. Supervisors have moved from accepting point-in-time attestation to expecting demonstrable, continuous control operation. DORA has been in full application since January 2025 and national competent authorities are in active supervision. Ask most organisations to evidence that a given control operated on a given production change six months ago and the answer arrives in days or weeks, assembled by hand. At agentic change volumes, an evidence process measured in weeks is not a process.
 
-The regulatory calendar reinforces the point rather than relieving it. The EU AI Act's transparency obligations apply from August 2026; the Annex III high-risk obligations, originally dated August 2026, were deferred to December 2027 by Regulation (EU) 2026/1744, which entered into force on 27 July 2026. The deferral buys time to build the evidence architecture. It does not remove the requirement, and DORA's ICT obligations are unaffected by it.
+The regulatory calendar reinforces the point rather than relieving it. Regulation (EU) 2026/1744 of 8 July 2026 — the Digital Omnibus on AI, published in the Official Journal on 24 July 2026 and in force from 27 July 2026 — moved the Annex III standalone high-risk obligations from 2 August 2026 to **2 December 2027**, and the Annex I obligations for high-risk systems embedded in regulated products from 2 August 2027 to **2 August 2028**. It left Article 50 transparency where it was, applying from **2 August 2026**.
+
+Three things follow, and the third is the one that matters here. The deferral buys time to build the evidence architecture; it does not remove the requirement. DORA's ICT obligations are untouched by it. And **Article 4 — the AI literacy obligation — was never deferred at all**: in force since 2 February 2025 with national enforcement from August 2026, it requires providers *and deployers* to ensure a sufficient level of AI literacy among staff and anyone operating AI on the organisation's behalf, proportionate to role, risk and existing expertise. In an engineering organisation where agents are writing production code, that population is most of the department. It is outcome-based, which means it is evidenced the same way everything else in this document is — or not at all.
+
+### An honest word about the productivity evidence
+
+This document argues that build time collapses. The measured picture is more interesting than that, and a playbook that omitted it would deserve the scepticism it got.
+
+METR ran a randomised controlled trial with experienced open-source developers on real tasks in their own repositories. The developers took **19% longer** with AI tools than without. Afterwards, the same developers estimated AI had made them about **20% faster**. They were wrong about their own work, in the favourable direction, by roughly forty points.
+
+DORA's 2026 research frames the same tension more usefully. AI is an **amplifier**: where tests are solid, pull requests small, technical context accessible and delivery flow healthy, it expands capacity; where reviews are slow, tests fragile, approvals manual and architecture poorly documented, it amplifies exactly those problems. Teams commonly pass through a **J-curve** — a real dip before any gain.
+
+Three consequences for anyone running this programme:
+
+- **Foundations before agents.** If the amplifier finding holds, deploying agents onto a weak delivery system makes it worse, faster. §10.2 puts test coverage ahead of enthusiasm in team selection for this reason.
+- **Do not trust self-reported speed, including your own.** The perception gap is the single strongest argument for §9's measurement discipline, and it is why the Tier 3 list is a prohibition rather than a preference.
+- **Budget for the dip.** A programme sold on immediate throughput gains will be cancelled in month three, during the part the research says to expect.
 
 > **The uncomfortable conclusion.** You cannot govern agentic development by reviewing more carefully. You govern it by moving the control from the review to the pipeline, and by making the evidence a by-product of the work rather than a reconstruction after it.
 
 ---
 
 ## 3. Why vendor neutrality is a control requirement, not a preference
+
+*If you cannot change AI supplier, your supervisor has a question you cannot answer.*
 
 In an unregulated startup, betting the SDLC on a single AI vendor is a reasonable speed trade. In a regulated institution it creates four specific exposures.
 
@@ -63,11 +165,17 @@ In an unregulated startup, betting the SDLC on a single AI vendor is a reasonabl
 
 **Sovereignty and residency.** European and UK institutions increasingly need model inference on specific clouds, specific regions, or on-premises for particular data classifications. That is a routing problem if you have an abstraction layer and a migration programme if you do not.
 
+**The UK position, for dual-regulated firms.** The Bank of England and PRA confirmed on 1 April 2026 that they are staying **technology-agnostic** — AI supervised through existing frameworks rather than a bespoke AI rulebook — while keeping the need for further guardrails under review. That is not the relief it first reads as. It means AI adoption is judged against the operational resilience, model risk and third-party rules you already have, and the PRA has named AI adoption a **2026 supervisory priority**, so it arrives in routine supervisory dialogue rather than in a separate consultation.
+
+The concrete date is the one to plan against: **by the end of 2026, HM Treasury must designate major AI and cloud providers as critical third parties** under the Critical Third Parties regime. At that point the concentration argument in this section stops being a matter of engineering judgement and becomes a designated-provider regime with direct regulatory oversight of the firms depending on it. An institution that has already made its agent runtime replaceable will experience that as a filing exercise. One that has not will experience it as a programme.
+
 Vendor neutrality does not mean vendor agnosticism in practice. Pick a primary model and a primary agent runtime; get the benefit of depth. Just make sure the *assets* — context, procedures, policy, evidence — sit in formats that outlive the choice.
 
 ---
 
 ## 4. Design principles
+
+*Seven rules. Everything else in this document is a consequence of one of them.*
 
 These seven principles are the ones we hold to on every engagement. Everything downstream is derived from them.
 
@@ -89,7 +197,42 @@ These seven principles are the ones we hold to on every engagement. Everything d
 
 ## 5. Reference architecture: five planes
 
-The architecture separates into five planes. Each can be sourced, replaced and audited independently — which is the whole point.
+*Five separable layers, so that replacing any one of them is a procurement decision rather than a rebuild.*
+
+The architecture separates into five planes. Each can be sourced, replaced and audited independently — which is the whole point, and which is also the test for whether something deserves to be a plane. Identity, for instance, matters enormously and is *not* a plane: it cuts across all five and is treated where it binds, in §5.2.
+
+```mermaid
+flowchart TB
+    subgraph RT["5.2 · Agent runtime — most replaceable"]
+        A["Coding agent<br/>own machine identity"]
+    end
+    subgraph CX["5.3 · Context — portable, yours"]
+        B["AGENTS.md · Skills · MCP allowlist"]
+    end
+    subgraph MA["5.1 · Model access"]
+        C["Gateway<br/>routes, quota, residency, logging"]
+    end
+    subgraph CP["5.4 · Control — the authoritative layer"]
+        D["Deterministic gates<br/>no model in the decision"]
+    end
+    subgraph EV["5.5 · Evidence"]
+        E["OTel · signed attestations · change record"]
+    end
+
+    A -->|reads| B
+    A -->|every model call| C
+    C -->|inference| P["Model providers<br/>swappable behind the route"]
+    A -->|proposes a change| D
+    D -->|allow / refuse| G["main branch, then production"]
+    D -.->|emits as it runs| E
+    A -.->|telemetry| E
+    C -.->|prompt + cost logs| E
+
+    classDef swap stroke-dasharray:4 3
+    class RT,P swap
+```
+
+Read it once for the dashed boxes: the agent runtime and the model providers are the two components designed to be swapped, and neither of them sits between a change and production. The control plane does, and nothing in it is a model.
 
 ### 5.1 Model access plane
 
@@ -99,6 +242,8 @@ Responsibilities: authentication and per-team quota; routing policy (which workl
 
 Non-negotiable: no engineer laptop and no CI runner holds a direct provider API key. Provider credentials terminate at the gateway.
 
+> **The gateway is itself a supply-chain target, and should be treated as one.** In March 2026 a backdoored release of LiteLLM — a widely deployed open-source model gateway — sat on PyPI for about three hours and was downloaded on the order of tens of thousands of times before removal. The component recommended here for *concentrating* provider credentials is, by construction, the highest-value single point in the architecture. Pin versions and verify signatures rather than tracking latest; run it in its own trust boundary with egress restricted to the provider endpoints it actually needs; alert on configuration and dependency change. A gateway is the right architecture and an unmonitored gateway is a worse position than no gateway at all.
+
 ### 5.2 Agent runtime plane
 
 Whichever coding agents your engineers actually use — and there will be more than one. The runtime is the most replaceable component in the stack and should be treated as such.
@@ -106,6 +251,19 @@ Whichever coding agents your engineers actually use — and there will be more t
 Standardise on: a managed baseline configuration distributed by MDM or the admin console and not editable locally; execution inside a container with a filesystem and network egress allowlist; credential files and secret environment variables stripped from the agent's reach; a distinct machine identity so agent actions are attributable separately from the engineer who triggered them.
 
 The runtime's own guardrail features (pre-action hooks, permission modes, sandboxes) are valuable and should be used — as the *fast* layer. They are not the authoritative layer.
+
+#### Agent identity
+
+"A distinct machine identity" is one clause above and a programme in practice, so it is worth being specific. Every control in §8 that distinguishes an agent from a human — segregation of duties, the autonomy matrix, agent-attributed change failure rate, the `agent_identity` field in every artifact header — is only as good as the identity underneath it. If an agent runs as a shared service account, or as the engineer who triggered it, none of those controls mean anything and the evidence they produce is misattributed at source.
+
+Non-human identities now substantially outnumber human ones in a typical enterprise estate, and agent identities are the fastest-growing category within that. Four requirements, in the order they usually get skipped:
+
+- **Issuance.** Each agent workload gets its own identity at start-up, derived from attestation of what it actually is, rather than a credential pasted into a configuration file. **SPIFFE** is the relevant open standard here: SPIRE attests the node and the workload, then issues a short-lived SVID (an X.509 certificate for mTLS, or a JWT). It is vendor-neutral and it removes long-lived secrets from the picture, which is the property that matters.
+- **Scoping.** The identity carries the autonomy tier of §8.2, not the permissions of the human who invoked it. An agent invoked by an administrator does not thereby become one.
+- **Rotation and revocation.** Short-lived by default, and revocable in one action. "Which agents can currently reach production, and who can stop them in the next sixty seconds" should have an answer.
+- **Non-repudiation.** Agent actions appear under the agent's identity in every log, PR, change record and attestation — with the invoking human recorded alongside, never in place of it. Accountability stays with a named person (§4, principle 7); attribution does not get to be vague about which of them did what.
+
+**The honest limit.** SPIFFE establishes verifiable workload identity. It does not decide authorisation, broker credentials to downstream systems, or carry delegated human authority — the fact that this agent is acting for this person, within that person's mandate, for this change. That last one has no settled standard as of late 2026. Until it does, delegated authority lives in the artifact header and the change record, which is why §6.2 puts `agent_identity` and the originator in the same block. Treat that as a known gap with a named owner rather than a solved problem.
 
 ### 5.3 Context plane
 
@@ -115,7 +273,13 @@ The runtime's own guardrail features (pre-action hooks, permission modes, sandbo
 
 **MCP servers** for tool and data access, on a platform-owned allowlist. Deployment tooling, ticketing, observability, the CMDB and the artifact repository all belong here.
 
-> **Security note.** The skills ecosystem is now large and largely unvetted. Public audits during 2026 found tens of thousands of quality and security issues across sampled public skills, with prompt injection detected in a substantial minority. Treat third-party skills and MCP servers as executable supply chain: internal registry, code review, signing, and provenance. Content the agent reads — issue text, dependency documentation, web pages, PR comments — is data, never instruction.
+MCP's governance position strengthened materially in the period this document covers, and that is the reason it appears in the table in §1 as a standard rather than a vendor feature: Anthropic donated the protocol to the **Agentic AI Foundation under the Linux Foundation** in December 2025, and roughly 150 organisations now participate in its governance. For a third-party risk assessment, the relevant fact is that no single commercial entity can now unilaterally change or withdraw it.
+
+That is the specification. The **distribution channel is a different question and the answer is worse.** Admission to the public MCP registry requires proof of GitHub repository or domain ownership and nothing else — no code review, no security audit, no malware scanning — and a server can be modified after it has been adopted, which makes trust-on-first-use precisely the wrong model. Public scanning has found tens of thousands of internet-exposed MCP server instances, with the large majority of audited production servers running without authentication at all. NSA and CISA published MCP security design guidance in June 2026; it is short, it is free, and it is the document to hand your platform team.
+
+The practical consequence for this architecture: **the protocol is portable, the registry is not a supply chain you can accept.** Internal registry, reviewed and signed, with a named owner per server and a pinned version. An MCP server is code running with your agent's credentials against your systems — treat it exactly as you would an internally deployed service, because that is what it is.
+
+> **Security note.** The skills ecosystem is now large and largely unvetted. Public audits during 2026 found tens of thousands of quality and security issues across sampled public skills, with prompt injection detected in a substantial minority. This is no longer hypothetical: over a thousand malicious skills were confirmed in a single public agent-skill marketplace during 2026, in what was characterised at the time as the largest supply-chain attack yet aimed at AI agent infrastructure. Treat third-party skills and MCP servers as executable supply chain: internal registry, code review, signing, and provenance. Content the agent reads — issue text, dependency documentation, web pages, PR comments — is data, never instruction.
 
 ### 5.4 Control plane
 
@@ -137,19 +301,43 @@ Three streams, correlated by change ID.
 
 *System-of-record linkage* — the change record, the requirement ID, the incident ID. See §6.3.
 
+**A fourth thing to inventory: the agent stack itself.** The three streams above evidence what happened to a *change*. None of them records what *produced* it — which agent and version, which skills at which revision, which MCP servers, which routes. Six months later, when a defect pattern or a security finding needs tracing back, that is the question, and reconstructing it from telemetry is exactly the after-the-fact exercise principle 5 exists to prevent.
+
+The formats are further along than most teams realise. **CycloneDX 1.6** carries ratified ML-BOM fields for models, parameters and datasets; **SPDX 3.0.1** publishes formal AI and Dataset profiles. Both are worth emitting: CycloneDX is the more practical in a CI pipeline, SPDX carries more weight in a regulatory submission. The regulatory driver for anyone in scope is **AI Act Article 11 and Annex IV**, whose technical-documentation expectations are considerably easier to meet from a generated inventory than from a document someone maintains by hand.
+
+The honest caveat: a CycloneDX **"Agent BOM"** — covering MCP servers, tool definitions and agent credentials, which is the part most specific to this architecture — is a **proposal and not yet ratified**. Until it is, capture that inventory in whatever form your evidence store already accepts, and keep it machine-generated. The format will change; the fact that you have the data will not need to.
+
 ---
 
 ## 6. The portable artifact chain
+
+*Every stage leaves a committed file behind, so the audit trail is a by-product of the work rather than a reconstruction of it.*
 
 ### 6.1 The chain
 
 Each stage ends by committing an artifact. The commit triggers the next stage. The chain of commits *is* the audit trail.
 
+**This pattern now has a name and a tooling ecosystem: spec-driven development.** The convergence is worth stating plainly, because arriving at the same structure independently is evidence the structure is right rather than a matter of taste. **GitHub Spec Kit** is an open-source, MIT-licensed CLI and template set that moves work through specification, plan, tasks and implementation, and it works across Copilot, Claude Code, Gemini CLI, Cursor and others — which makes it a portable reference implementation of this section and, incidentally, a live demonstration of the Substitution Test. Reported first-pass success rates on non-trivial tasks are several times higher under a written spec than under prompting alone, which matches the "first-pass merge rate" metric in §9.
+
+**AWS Kiro** is the instructive counter-example rather than a competitor: a spec-first IDE built around EARS requirements syntax, where the specification, the model and the billing all sit inside one vendor's perimeter. It is a good product and it inverts this document's central design choice. If the specs are the durable asset — and this section argues they are — then the question to ask of any spec-driven tool is the one from §3: when you leave, do the specs come with you in a format something else can read?
+
+```mermaid
+flowchart LR
+    I["intent.md<br/><small>the problem, in the<br/>originator's words</small>"]
+    S["spec.md<br/><small>requirements + design,<br/>conflicts flagged</small>"]
+    P["plan.md<br/><small>files, sequence, risks,<br/>the proving tests</small>"]
+    D["diff + tests<br/><small>plan referenced<br/>in the commit</small>"]
+    R["PR + review findings<br/><small>agent review,<br/>human approval</small>"]
+    L["release record<br/><small>what shipped, from which<br/>digest, on whose authority</small>"]
+    F["finding / incident<br/><small>which becomes the<br/>next intent</small>"]
+
+    I --> S --> P --> D --> R --> L --> F
+    F -->|"the loop closes"| I
+
+    linkStyle 6 stroke-dasharray:5 4
 ```
-intent.md  →  spec.md  →  plan.md  →  diff + tests  →  PR + review findings
-     ↑                                                          ↓
-     └────────  finding / incident record  ←────  release record
-```
+
+Each arrow is a commit, and the commit is what triggers the stage after it. There is no separate workflow engine here and no status field anyone has to remember to update: **the chain of commits *is* the audit trail**, with git supplying the timestamps, the authorship and the immutability for free.
 
 - **`intent.md`** — the problem in the originator's words, plus constraints and success criteria.
 - **`spec.md`** — requirements and design, produced against the organisation's skills, with unresolvable policy conflicts flagged explicitly.
@@ -198,6 +386,8 @@ For organisations with mature ServiceNow DevOps Change Velocity deployments, thi
 ---
 
 ## 7. The stage plays
+
+*What actually happens at each of the seven stages, and what refuses to happen.*
 
 Seven stages. Stage 0 is the prerequisite for everything else and is the one most transformation programmes skip.
 
@@ -357,6 +547,8 @@ tiers:
 
 ## 8. Governance
 
+*How much freedom an agent gets, decided in advance and written down, rather than negotiated per change.*
+
 ### 8.1 Change risk classes
 
 | Class | Definition | Examples |
@@ -390,26 +582,48 @@ Publish this matrix. It is the artefact that lets a CISO, a head of engineering 
 |---|---|---|---|---|
 | Authorised change only | Change ticket + CAB | Change record gate in pipeline; artifact header carries change ID | Signed gate attestation | DORA Ch. II; SOX ITGC |
 | Segregation of duties | Author ≠ approver | Agent machine identity cannot approve; CODEOWNERS enforced | Identity in PR and pipeline logs | DORA Ch. II; SOX ITGC |
-| Secure development | Periodic secure code review | Security skill applied during authoring + deterministic gate at PR + scheduled scan | Skill version, gate result, scan history | NIST SSDF; DORA Ch. II |
-| Traceability of decisions | Documents and minutes | Artifact chain with headers; agent telemetry | Git history + OTel + attestations | EU AI Act traceability; DORA |
+| Secure development | Periodic secure code review | Security skill applied during authoring + deterministic gate at PR + scheduled scan | Skill version, gate result, scan history | NIST SP 800-218; **SP 800-218A** (generative-AI SSDF profile); DORA Ch. II |
+| Traceability of decisions | Documents and minutes | Artifact chain with headers; agent telemetry | Git history + OTel + attestations | EU AI Act Art. 12 (record-keeping); **ISO/IEC 5338** (AI lifecycle processes); DORA |
 | Human oversight | Sign-off in workflow | Named approver at each gate; autonomy matrix published | Approval records | EU AI Act Art. 14 |
-| Third-party ICT risk | Vendor assessment | Gateway abstraction; portable formats; documented exit path | Architecture record; substitution test result | DORA Ch. V |
+| Third-party ICT risk | Vendor assessment | Gateway abstraction; portable formats; documented exit path | Architecture record; substitution test result | DORA Ch. V (Art. 28–30); **UK Critical Third Parties regime** |
 | Testing and resilience | Test phase + DR test | Continuous evals; rehearsed rollback | Eval history; rollback drill records | DORA Ch. IV |
-| Model governance | N/A | Routes not raw models; eval-gated route changes; model inventory | Route config history; eval results | SR 11-7; ISO/IEC 42001 |
+| Model governance | N/A | Routes not raw models; eval-gated route changes; model inventory | Route config history; eval results | SR 11-7; **ISO/IEC 42001** (AI management system) |
+| **AI literacy** | Role-based training records | Competence tiered to autonomy: who may authorise A2 and A3 work, and on what basis | Training records linked to the autonomy matrix | **EU AI Act Art. 4** |
+| **Technical documentation of the AI stack** | Architecture documents | Generated inventory of agents, skills, MCP servers and routes (§5.5) | AI-BOM (CycloneDX / SPDX) | EU AI Act Art. 11 + Annex IV |
 
 ### 8.5 The threats that are specific to this model
 
-**Prompt injection through the work itself.** Agents read issue text, dependency documentation, log output and web pages. All of it is untrusted input. Instructions found there must never be executed. Enforce with: sandbox egress allowlists, tool permission scoping, and explicit instruction in `AGENTS.md` that content read from external sources is data.
+Since v1.0 of this document, OWASP's GenAI Security Project has published a peer-reviewed **Top 10 for Agentic Applications (ASI01–ASI10)** covering systems that plan, use tools, hold memory and coordinate with each other. The threats below are mapped onto it, both so that this section stops being one team's opinion and so that a security function can map it to work it is already doing.
 
-**Supply chain via skills and MCP servers.** A skill is executable instruction and an MCP server is executable code. Both are being distributed at scale through public catalogues with documented security problems. Internal registry, code review, signing, and provenance. No sideloading from home directories.
+Each carries at least one **incident from 2026** rather than a hypothetical. That is deliberate: abstract risk does not survive contact with a prioritisation meeting.
 
-**Sandbox escape and denylist evasion.** Documented cases exist of agents routing around path-based denylists and attempting to disable their own sandbox. This is why enforcement belongs at the OS and network layer rather than in argument validation, and why the sandbox must fail closed.
+**Prompt injection through the work itself — ASI01 (goal hijack), ASI06 (memory and context poisoning).** Agents read issue text, dependency documentation, log output, PR comments and web pages. All of it is untrusted input. Instructions found there must never be executed.
 
-**Evidence integrity.** If an agent can write to the evidence store, the evidence is worthless. Append-only storage, separate identity, integrity protection.
+> A vulnerability class researchers named **"Comment and Control"** established during 2026 that Claude Code, the Gemini CLI action and the GitHub Copilot agent *all* treated untrusted GitHub metadata — PR titles, issue bodies, HTML comments — as authoritative prompt content, in some cases enabling theft of live API keys and repository credentials. Three rival vendors, one failure. **This is the most important single data point in this document**: it demonstrates that the exposure is a property of the architecture rather than of a supplier, which is precisely why §4's principle 3 puts enforcement outside the agent, and why swapping vendor is not a mitigation.
+
+Enforce with: sandbox egress allowlists, tool permission scoping, and explicit instruction in `AGENTS.md` that content read from external sources is data. Treat the runtime's own protections as the fast layer, never the authoritative one.
+
+**Supply chain via skills and MCP servers — ASI04 (agentic supply chain).** A skill is executable instruction and an MCP server is executable code. Both are distributed at scale through public catalogues with documented security problems: over a thousand malicious skills were confirmed in one marketplace during 2026, and the public MCP registry admits servers on proof of repository or domain ownership alone. Internal registry, code review, signing, provenance, pinned versions, named owners. No sideloading from home directories.
+
+**Compromise of the agent's own CI integration — ASI03 (identity and privilege abuse), ASI05 (unexpected code execution).** The agent's pipeline integration runs with credentials, and a flaw in it is a flaw with repository write access behind it.
+
+> **Clinejection**, disclosed 9 February 2026 and exploited in the wild within about a week, was a permission-bypass in a widely deployed coding-agent GitHub Action (CVSS 4.0 base 7.8): its write-permission check trusted any GitHub App actor unconditionally, letting an unauthenticated external attacker inject prompts and reach full repository compromise **without holding write access**. Version-pin your agent actions, review their permission model rather than assuming it, and scope the token they receive to the minimum the stage needs.
+
+**Sandbox escape and denylist evasion — ASI02 (tool misuse and exploitation).** Documented cases exist of agents routing around path-based denylists and attempting to disable their own sandbox. Enforcement belongs at the OS and network layer rather than in argument validation, and the sandbox must fail closed.
+
+**Evidence integrity — ASI03.** If an agent can write to the evidence store, the evidence is worthless. Append-only storage, separate identity, integrity protection. The agent's identity must not hold the permission that would let it edit its own record.
+
+**Multi-agent coupling — ASI07 (insecure inter-agent communication), ASI08 (cascading failures).** As soon as one agent's output is another agent's input, an error propagates instead of stopping — and a reviewing agent that shares a failure mode with the authoring agent provides far less assurance than the two-pair-of-eyes intuition suggests. Two rules: **inter-agent messages are untrusted input and get validated like any other**, and **the deterministic gates sit between agents, not only at the end of the chain**, so a bad output is refused where it is produced rather than three hops later. A closed-loop trigger (Stage 6, §7) with no gate in the loop is an outage generator.
+
+**Over-trust in agent output — ASI09 (human–agent trust exploitation).** The most likely failure in a mature deployment is not a hostile agent. It is a competent one, trusted a little more each month, until an approval becomes a formality. The METR perception gap in §2 is this risk measured: practitioners were confidently wrong about their own results in the favourable direction. This is what the autonomy matrix (§8.3) is actually for — it forces the trust level to be *written down and approved* rather than to drift upward unrecorded. Review the matrix on a schedule, and treat a rising rubber-stamp rate at any gate as a control finding rather than a productivity gain.
+
+**Rogue and orphaned agents — ASI10.** Agents outlive the projects that created them. An agent still running with valid credentials against production, that no team believes it owns, is a live risk with no owner. Every agent identity carries an owner and an expiry; an unclaimed identity is disabled rather than investigated indefinitely. This is the operational half of §5.2's identity requirements, and the reason revocation has to be one action.
 
 ---
 
 ## 9. Measurement
+
+*Two things worth measuring, one thing that must not be — and why the third is a trap rather than an oversight.*
 
 Measure two tiers. Never measure the third.
 
@@ -428,12 +642,19 @@ Measure two tiers. Never measure the third.
 | Cost per merged change | The FinOps view that keeps this fundable |
 | `AGENTS.md` coverage | Foundation adoption |
 | Repeat-mistake rate | Whether the feedback loop into context is working |
+| **Duplication and maintainability trend** | Whether speed is being borrowed against the codebase |
+
+That last one is new in this version and belongs in Tier 2 rather than in a quality report, because it is the metric most likely to move in the wrong direction while every other number looks excellent. The signals worth trending are duplicated blocks, within-commit copy/paste, error-masking constructs and short-window churn — the measures §2 cites as having risen sharply across the industry. They are cheap to compute from your own history and they are the early warning that Tier 1's change failure rate will move in two quarters.
 
 **Tier 3 — Do not measure.** Lines of code, commits, PR count, tokens consumed, or "AI adoption percentage". Every one of these is trivially gamed by an agent and optimising for them produces volume, review debt and a change failure rate that will show up in Tier 1 two quarters later.
+
+Add one more to the prohibited list: **self-reported productivity.** The METR trial in §2 found practitioners misjudging their own measured performance by roughly forty points, in the direction that flattered the tool. A satisfaction survey is a legitimate way to find out whether engineers like working this way, which matters. It is not evidence that the programme works, and a steering committee shown both will reliably weight the wrong one.
 
 ---
 
 ## 10. Maturity and adoption
+
+*Where organisations actually are, and the order in which this gets built.*
 
 ### 10.1 Maturity model
 
@@ -453,7 +674,9 @@ Most organisations we meet are at L0 with pockets of L1. The gap that stalls pro
 
 **Days 31–60 — Lifecycle.** Artifact chain adopted in pilot teams; the first three skills written from real policy with named owners; plan-first enforced in the pipeline; feedback loops closed (one command each for build, test, lint); first eval suite of 20–50 real tasks; agent review passes on every pilot PR.
 
-**Days 61–90 — Control and evidence.** Approval gates expressed as deterministic checks; autonomy matrix published and enforced; rollback rehearsed; evidence attestations flowing to the compliance store; artifact headers linked to the ITSM change record; first supervisory-style evidence query run end to end as a rehearsal.
+**Days 61–90 — Control and evidence.** Approval gates expressed as deterministic checks; autonomy matrix published and enforced; rollback rehearsed; evidence attestations flowing to the compliance store; artifact headers linked to the ITSM change record; first supervisory-style evidence query run end to end as a rehearsal. **AI literacy evidenced against the autonomy matrix** — Article 4 requires literacy proportionate to role and risk, and the matrix is already the document that says which role carries which risk, so the two should be one exercise rather than a training module procured separately.
+
+**Running throughout — the people, not only the pipeline.** DORA's 2026 research identifies workforce retention and deliberate process redesign, rather than tooling, as what separates organisations that get value from AI from those that do not. Two implications for the plan above. The engineers who hold the context that makes agents effective are the ones most able to leave; a programme that treats them as a cost saving removes its own precondition. And the review skill this model depends on — judging whether a change does what was intended and whether the residual risk is acceptable — is a *different* skill from line-by-line reading, is scarcer, and does not appear on its own. Budget for teaching it.
 
 **Beyond 90 days.** Closed-loop triggers in Operate; scheduled codebase scanning; scale-out repository by repository; quarterly model route review gated on evals.
 
@@ -462,6 +685,8 @@ A realistic caution: the tooling in the first thirty days is the easy part. The 
 ---
 
 ## 11. How this gets delivered
+
+*What an engagement looks like in practice.*
 
 Delivering this needs financial services domain depth and hands-on platform engineering together — that combination is the requirement, not a preference. Agentic SDLC transformation fails when it is run as a tooling rollout by people who have not sat in a bank's change advisory board, and it fails equally when it is run as a governance exercise by people who cannot write the pipeline.
 
@@ -502,6 +727,8 @@ Anonymised references from recent and current engagements. *(Client naming subje
 ---
 
 ## Appendix A — `AGENTS.md` reference skeleton
+
+*The context file, filled in. Copy it and delete what does not apply.*
 
 ```markdown
 # <service name>
@@ -569,6 +796,8 @@ The paired deterministic gate for this policy runs `check-endpoints.sh` in CI an
 
 ## Appendix C — Substitution Test checklist
 
+*Twelve questions. Score them honestly; the total is the answer to §3's procurement question.*
+
 Score honestly. Any "no" is a portability debt with a named owner and a date.
 
 1. Is repository context in `AGENTS.md` rather than a vendor-specific filename?
@@ -590,13 +819,79 @@ Nine or fewer: you have a vendor SDLC. Ten or eleven: portable in principle, unt
 
 ## Appendix D — Primary sources
 
-- AGENTS.md open format and the Agentic AI Foundation under the Linux Foundation — `agents.md`, `aaif.io`
+*Where every claim in this document comes from.*
+
+Grouped by what they are evidence *for*. Where this document cites a number, it is here.
+
+**Open standards this design depends on**
+
+- `AGENTS.md` open format — `agents.md`; stewarded by the Agentic AI Foundation under the Linux Foundation — `aaif.io`
 - Agent Skills open specification — `agentskills.io`
-- Model Context Protocol specification
-- OpenTelemetry GenAI semantic conventions, `open-telemetry/semantic-conventions-genai` (Development status as of mid-2026)
-- Regulation (EU) 2022/2554 (DORA); Regulation (EU) 2024/1689 (EU AI Act) as amended by Regulation (EU) 2026/1744
-- NIST Secure Software Development Framework; ISO/IEC 42001; Federal Reserve SR 11-7
-- Anthropic, *The AI-Native SDLC Playbook* (August 2026) — the vendor-specific antecedent this document generalises
+- Model Context Protocol specification — donated by Anthropic to the Agentic AI Foundation, December 2025
+- OpenTelemetry GenAI semantic conventions — `open-telemetry/semantic-conventions-genai`; **Development status** as of mid-2026, moved to a dedicated repository following the v1.42.0 release, June 2026
+- SPIFFE / SPIRE — workload identity (§5.2)
+- in-toto and SLSA — attestation formats (§5.5)
+- CycloneDX 1.6 (ratified ML-BOM fields) and SPDX 3.0.1 (AI and Dataset profiles); the CycloneDX **Agent BOM** proposal remains unratified (§5.5)
+
+**Regulation and supervisory expectation**
+
+- Regulation (EU) 2022/2554 (**DORA**) — in full application since January 2025; Chapter V, Art. 28–30 on ICT third-party risk and exit strategies
+- Regulation (EU) 2024/1689 (**EU AI Act**), as amended by **Regulation (EU) 2026/1744** of 8 July 2026 (*Digital Omnibus on AI*) — OJ 24 July 2026, in force 27 July 2026. Annex III standalone high-risk deferred to 2 December 2027; Annex I embedded high-risk to 2 August 2028; Article 50 transparency unchanged at 2 August 2026. Article 4 (AI literacy) in force since 2 February 2025, national enforcement from August 2026. Articles 11 and Annex IV on technical documentation; Art. 12 record-keeping; Art. 14 human oversight
+- **Bank of England / PRA**, response on AI in financial services, 1 April 2026 — technology-agnostic supervision; AI adoption a named PRA 2026 supervisory priority; HM Treasury to designate major AI and cloud providers under the **Critical Third Parties regime** by end-2026
+- NIST **SP 800-218** (SSDF) and **SP 800-218A** — *Secure Software Development Practices for Generative AI and Dual-Use Foundation Models*, July 2024
+- **ISO/IEC 42001:2023** (AI management system); **ISO/IEC 5338:2023** (AI system lifecycle processes); Federal Reserve **SR 11-7** (model risk management)
+
+**Evidence for the claims in §2 and §9**
+
+- **DORA (Google) — *State of AI-assisted Software Development* / ROI report, 2026.** Source for ~90% AI use among technology professionals, the *amplifier* framing, and the J-curve
+- **METR — randomised controlled trial on AI and developer productivity, July 2025.** Experienced open-source developers 19% slower on real tasks (95% CI ≈ [−40%, −2%], 246 tasks) while estimating ~20% faster. Source for the perception gap in §2 and §9's Tier 3 prohibition
+- **GitClear — *The Maintainability Gap*, 2026 AI code quality research.** Source for the duplication, copy/paste, error-masking and churn trends in §2 and the Tier 2 metric in §9
+
+**Threats and incidents (§8.5)**
+
+- **OWASP GenAI Security Project — Top 10 for Agentic Applications 2026 (ASI01–ASI10)**
+- **NSA / CISA — Model Context Protocol security design guidance, June 2026**
+- 2026 incidents cited: the *Clinejection* coding-agent GitHub Action permission bypass (disclosed 9 February 2026, exploited in the wild within days, CVSS 4.0 base 7.8); the *"Comment and Control"* vulnerability class affecting three rival coding agents; the LiteLLM PyPI backdoor (March 2026); and the confirmed malicious-skill campaign against a public agent-skill marketplace
+
+**Related work**
+
+- Anthropic, *The AI-Native SDLC Playbook* (21 August 2026) — the vendor-specific antecedent this document generalises
+- **Thoughtworks Technology Radar Vol. 34** (April 2026) — independently covers `AGENTS.md` and Agent Skills as techniques, and the *feedforward controls* framing. Useful precisely because it is vendor-neutral and arrived at two of the four portable assets separately
+- **GitHub Spec Kit** (open source, MIT) and **AWS Kiro** — spec-driven development tooling (§6.1)
+
+> **On verifying these.** Every figure above was checked against its primary source, and one was checked because this document appeared to be wrong: the Regulation (EU) 2026/1744 citation was doubted during the v1.1 review on the strength of commentary written before the instrument was adopted, and confirmed correct at EUR-Lex. Secondary commentary about a regulation is not a citation of it. Anyone quoting these numbers onward should go to the source, for the same reason this document requires evidence to be a by-product rather than a reconstruction.
+
+---
+
+## Appendix E — Glossary
+
+*Plain definitions, in the order a newcomer meets them. No definition here uses a term defined below it without linking back.*
+
+| Term | What it means |
+|---|---|
+| **Model** | The AI itself — the thing that, given text, produces text. Interchangeable in principle; §3 is about keeping it interchangeable in practice. |
+| **Agent** | A program that uses a model to *do* things rather than only answer: read files, write code, run tests, open a pull request. The contractor in the analogy at the front. |
+| **Agent runtime** | The specific product an engineer runs an agent in. The most replaceable component in the architecture (§5.2), and deliberately so. |
+| **Gateway** | A single checkpoint every AI request passes through, so credentials, routing, spend, data residency and logging are controlled in one place instead of on every laptop (§5.1). |
+| **Route** | A named request category — "the cheap one", "the careful one" — rather than a named model. Naming routes instead of models is what lets the model change without the code changing (§5.1). |
+| **Context** | What the agent is told about *your* codebase before it starts: how to build it, what not to touch, which conventions are deliberate. Kept in `AGENTS.md` (§5.3). |
+| **`AGENTS.md`** | The open-format file holding that context. Read by many competing agent products, which is what makes it a standard rather than one vendor's feature. |
+| **Skill** | A written procedure the agent applies consistently — a security review checklist, a release note format. Written once, used every time (§5.3). |
+| **MCP** (Model Context Protocol) | The open standard by which an agent reaches tools and data: ticketing, deployment, monitoring. Think of it as the socket that tools plug into (§5.3). |
+| **Gate** | An automatic check that allows or refuses a change. Ordinary deterministic code, never a model — the point of §4's principle 4 is that "the AI approved it" is not auditable. |
+| **Deterministic** | Same input, same answer, every time. The property that makes a gate evidence rather than an opinion. |
+| **Evidence / attestation** | The signed, timestamped record that a control ran and what it found — produced by the control as it runs, not assembled afterwards (§5.5). |
+| **Artifact chain** | The sequence of committed files — intent, spec, plan, diff, review, release — that together *are* the audit trail, because each one triggered the next (§6). |
+| **Artifact header** | The small block of structured fields at the top of each of those files, which is what makes the whole chain searchable in one command (§6.2). |
+| **Autonomy tier** | How much an agent is allowed to do without a human: propose only, act in test, act in production. Written down in advance (§8.2). |
+| **Risk class** | How much a given change could hurt if it were wrong, which determines the autonomy tier it is allowed (§8.1). |
+| **Blast radius** | How far the damage spreads if a change is wrong. One report, one service, or every customer. |
+| **Segregation of duties** | The rule that whoever made a change cannot be the only one who approves it. Agents get their own identity precisely so this rule can still be checked (§5.2). |
+| **Eval** | A fixed set of realistic tasks, run against a proposed configuration change to see whether quality moved before it reaches anyone (§7, Stage 4). |
+| **Substitution Test** | The twelve-question check in Appendix C: could you change AI supplier and keep identical context, controls and evidence? |
+| **AI-BOM** | An itemised inventory of the AI components in use — agents, skills, tool servers, routes — generated rather than maintained by hand (§5.5). |
+| **Prompt injection** | An attack where instructions are hidden in something the agent *reads* — an issue comment, a web page, a dependency's documentation — and the agent follows them (§8.5). |
+| **DORA** | Two different things in this document, unfortunately. **DORA the regulation** is the EU Digital Operational Resilience Act (§3). **DORA the research** is the long-running software delivery study cited in §2. Context distinguishes them; the regulation is always cited with an article or chapter. |
 
 ---
 

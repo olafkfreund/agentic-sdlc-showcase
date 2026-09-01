@@ -130,7 +130,7 @@ header, and every gate emits a record keyed to a control id.
   <div class="card">
     <span class="tag">Source</span>
     <h3><a href="{{ '/playbook/' | relative_url }}">The playbook itself</a></h3>
-    <p>The full v1.0 text this repository implements, published as it is on disk.</p>
+    <p>The full v1.1 text this repository implements, published as it is on disk.</p>
   </div>
 </div>
 

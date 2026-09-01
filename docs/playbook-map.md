@@ -1,6 +1,6 @@
 # Playbook → repository map
 
-Every executable claim in the Agentic SDLC Playbook v1.0, and where it runs here.
+Every executable claim in the Agentic SDLC Playbook v1.1, and where it runs here.
 Sections with no row are narrative or commercial and have nothing to execute.
 
 ## §4 Design principles
@@ -24,6 +24,7 @@ Sections with no row are narrative or commercial and have nothing to execute.
 | 5.3 Context | `AGENTS.md`, `.agent/skills/`, `.agent/mcp-allowlist.yaml` |
 | 5.4 Control | `policy/`, `scripts/check_*.py`, `CODEOWNERS` |
 | 5.5 Evidence | `evidence/`, `ops/otel-collector.yaml`, `actions/attest-build-provenance` |
+| 5.2 Agent identity | `agent_identity` in every artifact header, validated by `scripts/artifacts.py`; the agent assigned as a distinct login in `.agent/runtimes.yaml` (`actor` ≠ `assignee` ≠ `reviewer`); `check_codeowners.py` for author ≠ approver. **Issuance, rotation and revocation are not implemented here** — see Deliberate departures |
 
 ## §6 The artifact chain
 
@@ -54,7 +55,7 @@ Sections with no row are narrative or commercial and have nothing to execute.
 | 8.2 Autonomy tiers | `policy/autonomy-matrix.yaml` |
 | 8.3 The matrix | same file, enforced by `check_autonomy.py` |
 | 8.4 Control mapping | `policy/controls.yaml` — every objective names its gate and its evidence |
-| 8.5 Threats | prompt injection: `AGENTS.md` Trust section + evals 011/012. Supply chain: `.agent/mcp-allowlist.yaml`. Evidence integrity: append-only export in `ops/otel-collector.yaml` + eval 023 |
+| 8.5 Threats | ASI01/ASI06 prompt injection: `AGENTS.md` Trust section + evals 011/012. ASI04 supply chain: `.agent/mcp-allowlist.yaml`. ASI03 evidence integrity: append-only export in `ops/otel-collector.yaml` + eval 023. ASI08 cascading failures: the gates run between stages, not only at the end — Stage 6's detector drafts an artifact and is refused a PR. **ASI07, ASI09 and ASI10 have no executable analogue here** — see Deliberate departures |
 
 ## §9 Measurement
 
@@ -86,3 +87,8 @@ agent, and optimising for them produces volume and review debt.
 | "policy-as-code in CI (OPA / Rego, Conftest)" | Python gates over version-controlled YAML | Rego *and* Python means two homes for one rule, and they drift. The control requirement is a deterministic enforcement point outside the agent, which this satisfies. Conftest is the swap-in for OPA estates — replacing the Python, not duplicating it. |
 | A model access gateway | Declared in `.agent/routes.yaml`, not stood up | Out of scope for a reference repository. The eval runner's `--mode gateway` speaks the protocol and is wired but unexercised here. |
 | Signed attestations to a compliance store | `actions/attest-build-provenance` to GitHub's own store | Same in-toto/SLSA form, no third party to onboard for a demo. |
+| §5.2 SPIFFE/SPIRE workload identity, short-lived SVIDs, one-action revocation | GitHub's own bot identities, distinct from the human in every log and record | Attribution — the property the controls in §8 rest on — is real here. The credential lifecycle underneath it is the platform's, not this repository's. Standing up SPIRE for a reference repo would demonstrate SPIRE, not this operating model. |
+| §5.5 AI-BOM (CycloneDX / SPDX) | Not emitted | The Agent BOM proposal that would cover the parts specific to this architecture — MCP servers, tool definitions, agent credentials — is unratified. Emitting a format that is about to change is worse than recording the gap. |
+| §8.4 AI literacy (EU AI Act Art. 4) | Not a gate | An organisational control over people, proportionate to role. There is nothing in a repository to check, and a gate that pretended to check it would be exactly the control theatre this repository exists to refuse. |
+| §8.5 ASI07 inter-agent communication, ASI09 human–agent trust, ASI10 rogue agents | Not implemented | ASI07 needs more than one agent, and this repository runs one. ASI09 (approval drifting into rubber-stamping) and ASI10 (orphaned agents with live credentials) are observed over months across an estate; neither is a property of a single change that a gate could evaluate. |
+| §9 duplication and maintainability trend | Not measured | The playbook recommends trending it. Doing so needs a history this repository does not have, and the §9 table above lists only metrics actually emitted here. |
