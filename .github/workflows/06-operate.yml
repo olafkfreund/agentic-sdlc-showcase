@@ -127,6 +127,16 @@ jobs:
           BRANCH="stage6/${CID}"
           git config user.name  "svc-agent-platform"
           git config user.email "svc-agent-platform@users.noreply.github.com"
+
+          # Belt and braces behind the allocator. `draft_intent.py` now reserves ids that
+          # exist only on a ref, so this should be unreachable — but pushing into a branch
+          # that already holds someone else's untriaged finding is the one outcome worth
+          # spending a line to make impossible.
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "::warning::$BRANCH already exists; suffixing with this run number."
+            BRANCH="${BRANCH}-r${{ github.run_number }}"
+          fi
+
           git checkout -b "$BRANCH"
           git add intent/
           git commit -m "Stage 6: anomaly at ${{ needs.detect.outputs.sigma }} sigma becomes an intent
@@ -134,7 +144,19 @@ jobs:
           Rules fired: ${{ needs.detect.outputs.rules }}
           Authored by the agent identity, with no human in the invocation path.
           Triage: fix now, schedule, or dismiss. Dismissals tune the bands."
-          git push -u origin "$BRANCH"
+
+          # The push must not be able to end this step. For three consecutive nights it did:
+          # the branch already existed, the push was refused, and because both the pull
+          # request and the issue fallback come *after* this line, a 6.926 sigma detection
+          # reached nobody at all. The detection is the artifact that matters; the branch is
+          # a convenience. If the branch cannot be pushed, say so in the issue and still
+          # open the issue.
+          if git push -u origin "$BRANCH"; then
+            PUSHED=yes
+          else
+            PUSHED=no
+            echo "::warning::could not push $BRANCH; the finding is reported without it."
+          fi
           # Try the pull request first. Where the organisation does not permit
           # Actions to create pull requests — the same setting that would let a
           # workflow *approve* one, which this repository will not enable — fall
@@ -148,6 +170,17 @@ jobs:
           else
             cat pr_err.txt
             echo "::warning::Actions may not create pull requests in this org; opening an issue instead."
+            # Say where the intent actually is. Claiming a branch that was never pushed
+            # sends the reader to a 404 and makes the whole record untrustworthy.
+            if [ "$PUSHED" = yes ]; then
+              WHERE="The intent is committed on branch [\`${BRANCH}\`](../tree/${BRANCH}) as
+          \`intent/${CID}-*.md\`. **[Open it as a pull request](../compare/${BRANCH}?expand=1)** to
+          send it through the normal gates."
+            else
+              WHERE="**The branch could not be pushed**, so the drafted intent did not survive this
+          run — the detection evidence below is the record. Re-run Stage 6, or write the
+          intent by hand from the evidence; either way it goes through the normal gates."
+            fi
             gh issue create \
               --title "[Stage 6] ${CID}: post_deploy_error_rate anomaly" \
               --label "stage-6,intent,autonomy-A2" \
@@ -156,9 +189,7 @@ jobs:
           Rules fired: ${{ needs.detect.outputs.rules }}
           Suspect deploy: ${{ needs.detect.outputs.suspect_deploy || 'none in the window' }}
 
-          The intent is committed on branch [\`${BRANCH}\`](../tree/${BRANCH}) as
-          \`intent/${CID}-*.md\`. **[Open it as a pull request](../compare/${BRANCH}?expand=1)** to
-          send it through the normal gates.
+          ${WHERE}
 
           This organisation does not permit GitHub Actions to create pull requests — the
           same setting that would allow a workflow to *approve* one. Keeping it off is

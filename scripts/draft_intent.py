@@ -15,6 +15,8 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import re
+import subprocess
 import sys
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
@@ -117,6 +119,44 @@ def next_change_id(existing: set[str]) -> str:
     return f"CHG-2026-{max(numbers, default=0) + 1:06d}"
 
 
+def reserved_change_ids() -> set[str]:
+    """Ids already allocated on a git ref, which the working tree cannot see.
+
+    Every id this script has ever issued lives on a `stage6/*` branch, because Actions is
+    deliberately not permitted to merge them — that is the segregation of duties this
+    repository is built on. The consequence is that a CI checkout of `main` contains none
+    of them, so allocating from the working tree alone re-issues the last one, the push to
+    the branch that already holds it is rejected, and Stage 6 loses the finding.
+
+    Refs rather than the issues API on purpose: no token needed, works offline for someone
+    running this by hand, and a branch is what the push actually collides with. An id in an
+    issue with no branch collides with nothing.
+
+    Never raises. Where git is missing or the remote is unreachable this returns whatever it
+    found, degrading to the old behaviour. An allocator that refuses to run because it could
+    not reach a remote is a detector that does not run, which is the failure being fixed.
+    """
+    found: set[str] = set()
+    for args in (
+        ["git", "for-each-ref", "--format=%(refname)"],
+        ["git", "ls-remote", "--heads", "origin"],
+    ):
+        try:
+            out = subprocess.run(
+                args, capture_output=True, text=True, timeout=30, check=False, cwd=gate.ROOT
+            )
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if out.returncode == 0:
+            found |= set(re.findall(r"CHG-\d{4}-\d{6}", out.stdout))
+    return found
+
+
+def allocated_change_ids() -> set[str]:
+    """Everything an id could collide with: filed artifacts plus ids reserved on a ref."""
+    return {a.change_id for a in artifacts.all_artifacts() if a.change_id} | reserved_change_ids()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--from-detection", required=True)
@@ -124,7 +164,7 @@ def main() -> int:
     args = parser.parse_args()
 
     detection = json.loads((gate.ROOT / args.from_detection).read_text())
-    change_id = next_change_id({a.change_id for a in artifacts.all_artifacts()})
+    change_id = next_change_id(allocated_change_ids())
 
     body = TEMPLATE.format(
         change_id=change_id,
