@@ -10,6 +10,12 @@ seven stages, five planes, a portable artifact chain, an autonomy matrix, and th
 Substitution Test — as code that runs, gates that refuse, and evidence that is a
 by-product rather than a reconstruction.
 
+**Would rather listen?** [A 26-minute audio overview](https://olafkfreund.github.io/agentic-sdlc-showcase/listen/)
+covers why the bottleneck moved and why vendor neutrality is a control requirement. The
+narration is AI-generated from the playbook with Google NotebookLM and both voices are
+synthetic — it is a way into the material, not commentary on it, and the playbook is the
+source of truth where the two differ.
+
 **GitHub Copilot is the agent runtime here.** Deliberately. The playbook's argument is
 that the operating model must survive a change of vendor, so the honest way to make that
 case is to use a specific vendor's agent while keeping every asset in open formats. Copilot

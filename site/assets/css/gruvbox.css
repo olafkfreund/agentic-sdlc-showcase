@@ -187,6 +187,24 @@ pre.mermaid:has(svg) {
 }
 pre.mermaid svg { max-width: 100%; height: auto; }
 
+/* The native <audio> control, given room to breathe. No player library: the browser's own
+   is accessible and keyboard-navigable, and adds no third-party script to a site whose
+   playbook spends a section on supply chain. */
+.audio-card {
+  margin: 1.75rem 0;
+  padding: 1.1rem 1.2rem;
+  background: var(--bg0);
+  border: 1px solid var(--bg2);
+  border-radius: 6px;
+}
+.audio-card audio { width: 100%; display: block; }
+.audio-meta {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--fg4);
+}
+.audio-meta strong { color: var(--fg2); font-weight: 600; }
+
 /* tables scroll inside themselves; the page never scrolls sideways */
 table {
   display: block;

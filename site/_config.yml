@@ -37,6 +37,7 @@ nav:
   - { title: One change,    url: /story/ }
   - { title: Adoption,      url: /adoption/ }
   - { title: Watch it run,  url: /screencast/ }
+  - { title: Listen,        url: /listen/ }
   - { title: The stages,    url: /stages/ }
   - { title: The gates,     url: /gates/ }
   - { title: Substitution,  url: /substitution/ }
