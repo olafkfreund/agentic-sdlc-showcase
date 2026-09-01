@@ -142,13 +142,20 @@ em { color: var(--fg2); }
 hr { border: 0; border-top: 1px solid var(--bg1); margin: 2.5rem 0; }
 
 blockquote {
-  margin: 1.5rem 0;
-  padding: 0.35rem 0 0.35rem 1.1rem;
-  border-left: 3px solid var(--orange);
+  margin: 1.6rem 0;
+  padding: 0.9rem 1.1rem;
+  background: var(--bg0);
+  border: 1px solid var(--bg2);
+  border-radius: 5px;
   color: var(--fg3);
 }
 blockquote p:first-child { margin-top: 0; }
 blockquote p:last-child { margin-bottom: 0; }
+/* The accent lives in the words, not in a slab down the side. Nearly every callout on
+   this site opens `**Like this.**`, so the lead takes the colour the border used to —
+   which puts the emphasis on what the callout says rather than on its packaging.
+   Scoped to the opening strong so bold used mid-paragraph stays ordinary bold. */
+blockquote > p:first-child > strong:first-child { color: var(--orange); }
 
 code {
   font-family: var(--mono);
@@ -159,10 +166,12 @@ code {
   border-radius: 3px;
 }
 
+/* The quietest of the three boxes, deliberately: monospace on its own ground already reads
+   as code, so the border only has to contain it. Callouts get the lighter --bg2 edge and
+   sit slightly forward of this. */
 pre {
   background: var(--bg0);
   border: 1px solid var(--bg1);
-  border-left: 3px solid var(--bg3);
   border-radius: 5px;
   padding: 1rem 1.1rem;
   overflow-x: auto;
@@ -260,9 +269,10 @@ footer.page {
 footer.page .inner { max-width: 1080px; margin: 0 auto; padding: 1.75rem 1.25rem 3rem; }
 footer.page a { color: var(--fg4); }
 
+/* Same shape as a blockquote — it is one, semantically — set a size smaller, with the
+   caution carried by the yellow lead rather than by a stripe. */
 .disclaimer {
   border: 1px solid var(--bg2);
-  border-left: 3px solid var(--yellow);
   border-radius: 5px;
   background: var(--bg0);
   padding: 0.9rem 1.1rem;
