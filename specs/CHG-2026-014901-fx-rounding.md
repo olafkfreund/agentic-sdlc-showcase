@@ -9,6 +9,9 @@ agent_identity: svc-agent-platform
 model_route: gateway/tier-frontier
 supersedes: null
 itsm_record: https://example.service-now.com/change_request.do?sysparm_query=number=CHG-2026-014901
+status: blocked
+status_reason: >-
+  Two policy conflicts in this spec cannot be jointly satisfied. Named policy owners resolve them with the product owner before engineering sees it (Stage 2 control point); autonomy_tier stays A0 until they close. The absent plan is the control working.
 ---
 
 

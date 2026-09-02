@@ -48,3 +48,38 @@ of the whole programme.
 | `frozen_path_exception` | List of frozen paths this change is permitted to touch. Requires R3 and architect approval (`policy/frozen-paths.yaml`). |
 | `itsm_record` | Direct URL to the ServiceNow/Jira record, where the ID alone is not enough. |
 | `incident_id` | Set when this change originates from an incident (Stage 6). |
+
+## Terminal status — when a chain stops
+
+Chains stop, legitimately and often: a policy conflict second line must resolve, an anomaly
+triaged as noise, work waiting on something outside the repository. Two optional fields say
+so, on the **last artifact of the chain**:
+
+```yaml
+status: blocked          # waiting on a named decision — will resume
+status_reason: >-
+  Two policy conflicts cannot be jointly satisfied; named owners resolve them
+  before engineering sees this spec. autonomy_tier stays A0 until they close.
+```
+
+| Value | Means |
+|---|---|
+| absent | active — the chain is in progress |
+| `blocked` | stopped on something outside this chain, and **will** resume |
+| `dismissed` | triaged, and will **not** resume |
+
+`status_reason` is mandatory whenever `status` is set, and rejected when it is not.
+`status: blocked` with no reason is the gap it exists to close, wearing a label.
+
+**Why the field exists.** `check_artifact_header.py` enforced the chain backwards only — a
+plan implies a spec implies an intent — so an intent that never became a spec passed
+silently, forever. On disk a deliberate halt and an abandoned change were the same shape:
+nothing after the last artifact. Three chains in this repository were in that state, and
+nobody reading the repository, the published chain page or the gates could tell which was
+which. Two of the three will resume; one never will.
+
+The gate now refuses a chain that stops short of a plan without declaring a status, and
+reports `chains_deliberately_stopped` in its evidence — so "what was proposed and abandoned,
+and on whose authority" is answerable from the evidence record rather than from memory.
+
+Absent means active, so every artifact written before this field existed remains valid.

@@ -28,6 +28,19 @@ REQUIRED = [
 
 CHANGE_ID = re.compile(r"^CHG-\d{4}-\d{6}$")
 RISK_CLASSES = {"R1", "R2", "R3"}
+
+# Terminal states for a chain that stops before a plan (§6.1). Absent means active.
+#
+# Without this, "deliberately stopped" and "quietly abandoned" are the same shape on disk,
+# and the chain page publishes both as if they were work in progress. The distinction is
+# not cosmetic: `blocked` is waiting on a named decision and will resume, `dismissed` never
+# will. An auditor asking why a change stopped needs that answered by the artifact, not
+# inferred from the absence of a later one.
+#
+# The convention already existed in prose — CHG-2026-014901's spec opens "STATUS: BLOCKED ON
+# POLICY CONFLICT" — used once, enforced nowhere, readable by nothing. This promotes it to a
+# header field so it is queryable like the rest of §6.2.
+STATUSES = {"blocked", "dismissed"}
 TIERS = {"A0", "A1", "A2", "A3"}
 CLASSIFICATIONS = {"public", "internal", "confidential", "personal", "restricted"}
 # A route, never a raw model name (Appendix C #5). Enforced, not suggested.
@@ -101,6 +114,17 @@ def validate(header: dict) -> list[str]:
 
     if "originator" in header and "@" not in str(header.get("originator", "")):
         errors.append("originator must be an email address")
+
+    # A terminal status must say why. "blocked" with no reason is the gap it exists to close,
+    # relabelled — and a reason with no status is a note nothing can query.
+    status, reason = header.get("status"), header.get("status_reason")
+    if status is not None:
+        if status not in STATUSES:
+            errors.append(f"status must be one of {sorted(STATUSES)}, got {status!r}")
+        if not str(reason or "").strip():
+            errors.append(f"status: {status} requires a status_reason saying why")
+    elif reason:
+        errors.append("status_reason is set without a status")
 
     return errors
 

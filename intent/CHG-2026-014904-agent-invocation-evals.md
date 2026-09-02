@@ -8,6 +8,9 @@ originator: olaf@freundcloud.com
 agent_identity: svc-agent-platform
 model_route: gateway/tier-frontier
 supersedes: null
+status: blocked
+status_reason: >-
+  The agent assigned to draft the spec cannot start: no GitHub AI credits on this account. Tracked as issue #6. Resumes when credits are available or a human drafts it.
 ---
 
 # Intent: regression-test the agent invocation path itself

@@ -30,6 +30,32 @@ def main() -> int:
                 f"has no {need} in the chain (§6.1)"
             )
 
+    # ...and it must not trail off. The rule above only looks backwards, so an intent that
+    # never became a spec passed silently and forever. A chain that stops short of a plan
+    # has to say so on its last artifact: `blocked` (waiting on a named decision, will
+    # resume) or `dismissed` (triaged, will not).
+    #
+    # Stopping is legitimate and common — a policy conflict that second line must resolve, an
+    # anomaly triaged as noise. What is not legitimate is stopping silently, because then a
+    # deliberate halt and an abandoned change are indistinguishable to everyone downstream,
+    # including the site that publishes them both as though work were in progress.
+    stopped = 0
+    for change_id in sorted({a.change_id for a in found if a.change_id}):
+        chain = artifacts.chain(change_id)
+        if "plan" in chain:
+            continue
+        last = chain.get("spec") or chain.get("intent")
+        if last is None or last.errors:
+            continue
+        if last.header.get("status") in artifacts.STATUSES:
+            stopped += 1
+            continue
+        findings.append(
+            f"{last.path.name}: chain {change_id} stops at {last.stage} with no plan and "
+            f"declares no status — set `status: blocked` or `status: dismissed` with a "
+            f"`status_reason` (§6.1)"
+        )
+
     return gate.report(
         "CHG-04",
         "artifact_header",
@@ -37,6 +63,7 @@ def main() -> int:
         findings,
         artifacts_checked=len(found),
         change_ids=sorted({a.change_id for a in found if a.change_id}),
+        chains_deliberately_stopped=stopped,
     )
 
 

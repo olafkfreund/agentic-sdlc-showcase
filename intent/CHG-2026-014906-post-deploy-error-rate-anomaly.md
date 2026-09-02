@@ -9,6 +9,9 @@ agent_identity: svc-agent-platform
 model_route: gateway/tier-balanced
 supersedes: null
 incident_id: null
+status: dismissed
+status_reason: >-
+  Stage 6 detection against a static fixture, triaged and closed as issue #3 on 2026-08-28. The detector was correct; the finding was not worth a change.
 ---
 
 # Intent: post_deploy_error_rate anomaly at 6.926 sigma

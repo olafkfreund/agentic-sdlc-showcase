@@ -109,21 +109,29 @@ def write_chain() -> None:
         ),
         "Three commits, three authors, three timestamps. **The chain of commits is the "
         "audit trail** — no transcript, no chat window, no vendor's session store.\n",
-        "| Change | Stage | Risk | Autonomy | Controls | Source |",
-        "|---|---|---|---|---|---|",
+        "| Change | Stage | State | Risk | Autonomy | Controls | Source |",
+        "|---|---|---|---|---|---|---|",
     ]
     for artifact, slug, rel in rows:
         controls = ", ".join(f"`{c}`" for c in artifact.header.get("controls", []) or [])
+        # A chain that stopped says so here. Listing a dismissed change identically to one
+        # in flight is the same failure the header field exists to close, in another medium.
+        status = artifact.header.get("status")
+        state = f"**{status}**" if status else "active"
         index.append(
             f"| [{artifact.change_id}]({{{{ site.baseurl }}}}/chain/{slug}/) "
-            f"| {STAGE_TITLE[artifact.stage]} "
+            f"| {STAGE_TITLE[artifact.stage]} | {state} "
             f"| `{artifact.header.get('risk_class', '')}` "
             f"| `{artifact.header.get('autonomy_tier', '')}` | {controls} "
             f"| [`{rel}`](https://github.com/olafkfreund/agentic-sdlc-showcase/blob/main/{rel}) |"
         )
     index.append(
         "\n> A chain with a gap is markdown. `scripts/check_artifact_header.py` refuses a "
-        "plan whose spec is missing, and a spec whose intent is missing.\n"
+        "plan whose spec is missing, and a spec whose intent is missing — and refuses a "
+        "chain that stops short of a plan without saying why. **blocked** is waiting on a "
+        "named decision and will resume; **dismissed** was triaged and will not. Stopping "
+        "is legitimate; stopping silently is not, because then a deliberate halt and an "
+        "abandoned change look identical.\n"
     )
     (out / "index.md").write_text("\n".join(index))
 
