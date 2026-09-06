@@ -99,6 +99,15 @@ def test_refund_requires_the_gateway_token(settled_payment):
     assert response.status_code == 401
 
 
+def test_refund_rejects_unknown_fields(settled_payment):
+    response = client.post(
+        f"/payments/{settled_payment}/refunds",
+        json={"operator_id": OPERATOR, "unexpected": "value"},
+        headers=AUTH,
+    )
+    assert response.status_code == 422
+
+
 def test_refund_emits_an_audit_event(settled_payment):
     before = len(audit.EVENTS)
     refund_id = refund(settled_payment).json()["refund_id"]
