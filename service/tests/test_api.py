@@ -49,6 +49,14 @@ def test_validation_error_does_not_echo_personal_data():
     assert PAYLOAD["payer_email"] not in response.text
 
 
+def test_create_payment_rejects_unknown_fields():
+    bad = {**PAYLOAD, "unexpected": "nope"}
+    response = client.post("/payments", json=bad, headers=AUTH)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "unexpected"]
+    assert PAYLOAD["payer_email"] not in response.text
+
+
 def test_round_trip():
     created = client.post("/payments", json=PAYLOAD, headers=AUTH).json()
     fetched = client.get(f"/payments/{created['payment_id']}", headers=AUTH).json()

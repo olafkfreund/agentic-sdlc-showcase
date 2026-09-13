@@ -2,7 +2,9 @@
 
 import uuid
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from . import audit, money
 from .models import PaymentRequest, PaymentResponse, RefundRequest, RefundResponse
@@ -21,6 +23,14 @@ _STORE: dict[str, dict] = {}
 # key becomes (payment_id, idempotency_key) — noted in the spec so the migration is
 # expected rather than discovered.
 _REFUNDS: dict[str, dict] = {}
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(
+    _request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    detail = [{k: v for k, v in error.items() if k != "input"} for error in exc.errors()]
+    return JSONResponse(status_code=422, content={"detail": detail})
 
 
 def settle(payment_id: str) -> None:

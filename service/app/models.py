@@ -1,6 +1,6 @@
 """Request/response models and the data classification map."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # Fields classified `personal` must never reach a log line or an error message.
 # scripts/check_pii.py and service/tests/test_pii.py both enforce this.
@@ -21,6 +21,8 @@ PERSONAL_FIELDS = frozenset(k for k, v in CLASSIFICATION.items() if v == "person
 
 
 class PaymentRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     amount: str = Field(description="Decimal amount as a string, e.g. '10.50'")
     currency: str
     payer_name: str
@@ -38,6 +40,8 @@ class PaymentResponse(BaseModel):
 
 
 class RefundRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     operator_id: str = Field(description="The operator issuing the refund. Personal data.")
     reason: str = ""
 

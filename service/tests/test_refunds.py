@@ -87,6 +87,13 @@ def test_error_messages_do_not_echo_the_request(accepted_payment):
     assert OPERATOR not in refund(accepted_payment).text
 
 
+def test_refund_rejects_unknown_fields(settled_payment):
+    response = refund(settled_payment, unexpected="nope")
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "unexpected"]
+    assert OPERATOR not in response.text
+
+
 def test_the_payment_row_is_not_mutated(settled_payment):
     """Reconciliation reads payments as an append-only log; refunded is derived."""
     refund(settled_payment)
