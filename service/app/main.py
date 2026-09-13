@@ -2,7 +2,13 @@
 
 import uuid
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exception_handlers import (
+    request_validation_exception_handler as fastapi_request_validation_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from . import audit, money
 from .models import PaymentRequest, PaymentResponse, RefundRequest, RefundResponse
@@ -21,6 +27,35 @@ _STORE: dict[str, dict] = {}
 # key becomes (payment_id, idempotency_key) — noted in the spec so the migration is
 # expected rather than discovered.
 _REFUNDS: dict[str, dict] = {}
+
+
+def _strip_validation_input(value):
+    if isinstance(value, dict):
+        return {k: _strip_validation_input(v) for k, v in value.items() if k != "input"}
+    if isinstance(value, list):
+        return [_strip_validation_input(item) for item in value]
+    return value
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    response = await fastapi_request_validation_exception_handler(request, exc)
+    detail = jsonable_encoder(exc.errors())
+    body_error_found = any(error.get("loc", [None])[0] == "body" for error in detail)
+    if not body_error_found:
+        return response
+    detail = [
+        _strip_validation_input(error) if error.get("loc", [None])[0] == "body" else error
+        for error in detail
+    ]
+    return JSONResponse(
+        status_code=response.status_code,
+        content={"detail": detail},
+        headers=dict(response.headers),
+        media_type=response.media_type,
+    )
 
 
 def settle(payment_id: str) -> None:
