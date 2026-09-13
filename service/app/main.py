@@ -41,7 +41,12 @@ async def request_validation_exception_handler(
     for error in detail:
         if error.get("loc", [None])[0] == "body":
             error.pop("input", None)
-    return JSONResponse(status_code=422, content={"detail": detail})
+    return JSONResponse(
+        status_code=response.status_code,
+        content={"detail": detail},
+        headers=dict(response.headers),
+        media_type=response.media_type,
+    )
 
 
 def settle(payment_id: str) -> None:
