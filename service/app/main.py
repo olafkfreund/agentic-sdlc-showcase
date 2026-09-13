@@ -1,9 +1,9 @@
 """HTTP routes. No domain logic here — see AGENTS.md Architecture."""
 
-import json
 import uuid
 
 from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exception_handlers import (
     request_validation_exception_handler as fastapi_request_validation_exception_handler,
 )
@@ -42,18 +42,17 @@ async def request_validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
     response = await fastapi_request_validation_exception_handler(request, exc)
-    payload = json.loads(response.body)
-    detail = payload["detail"]
+    detail = jsonable_encoder(exc.errors())
     body_error_found = any(error.get("loc", [None])[0] == "body" for error in detail)
     if not body_error_found:
         return response
-    payload["detail"] = [
+    detail = [
         _strip_validation_input(error) if error.get("loc", [None])[0] == "body" else error
         for error in detail
     ]
     return JSONResponse(
         status_code=response.status_code,
-        content=payload,
+        content={"detail": detail},
         headers=dict(response.headers),
         media_type=response.media_type,
     )
