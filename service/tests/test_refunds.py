@@ -94,6 +94,17 @@ def test_refund_rejects_unknown_fields(settled_payment):
     assert OPERATOR not in response.text
 
 
+def test_refund_schema_errors_do_not_echo_personal_data(settled_payment):
+    response = client.post(
+        f"/payments/{settled_payment}/refunds",
+        json={"operator_id": [OPERATOR]},
+        headers=AUTH,
+    )
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "operator_id"]
+    assert OPERATOR not in response.text
+
+
 def test_the_payment_row_is_not_mutated(settled_payment):
     """Reconciliation reads payments as an append-only log; refunded is derived."""
     refund(settled_payment)

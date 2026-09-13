@@ -32,16 +32,11 @@ _REFUNDS: dict[str, dict] = {}
 async def request_validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
-    detail = []
-    body_error_found = False
-    for error in exc.errors():
-        if error.get("loc", [None])[0] == "body":
-            body_error_found = True
-            detail.append({k: v for k, v in error.items() if k != "input"})
-        else:
-            detail.append(error)
+    errors = exc.errors()
+    body_error_found = any(error.get("loc", [None])[0] == "body" for error in errors)
     if not body_error_found:
         return await fastapi_request_validation_exception_handler(request, exc)
+    detail = [{k: v for k, v in error.items() if k != "input"} for error in errors]
     return JSONResponse(status_code=422, content={"detail": detail})
 
 
