@@ -3,6 +3,9 @@
 import uuid
 
 from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.exception_handlers import (
+    request_validation_exception_handler as fastapi_request_validation_exception_handler,
+)
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -27,9 +30,18 @@ _REFUNDS: dict[str, dict] = {}
 
 @app.exception_handler(RequestValidationError)
 async def request_validation_exception_handler(
-    _request: Request, exc: RequestValidationError
+    request: Request, exc: RequestValidationError
 ) -> JSONResponse:
-    detail = [{k: v for k, v in error.items() if k != "input"} for error in exc.errors()]
+    detail = []
+    body_error_found = False
+    for error in exc.errors():
+        if error.get("loc", [None])[0] == "body":
+            body_error_found = True
+            detail.append({k: v for k, v in error.items() if k != "input"})
+        else:
+            detail.append(error)
+    if not body_error_found:
+        return await fastapi_request_validation_exception_handler(request, exc)
     return JSONResponse(status_code=422, content={"detail": detail})
 
 
