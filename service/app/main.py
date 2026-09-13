@@ -29,6 +29,14 @@ _STORE: dict[str, dict] = {}
 _REFUNDS: dict[str, dict] = {}
 
 
+def _strip_validation_input(value):
+    if isinstance(value, dict):
+        return {k: _strip_validation_input(v) for k, v in value.items() if k != "input"}
+    if isinstance(value, list):
+        return [_strip_validation_input(item) for item in value]
+    return value
+
+
 @app.exception_handler(RequestValidationError)
 async def request_validation_exception_handler(
     request: Request, exc: RequestValidationError
@@ -38,9 +46,10 @@ async def request_validation_exception_handler(
     body_error_found = any(error.get("loc", [None])[0] == "body" for error in detail)
     if not body_error_found:
         return response
-    for error in detail:
-        if error.get("loc", [None])[0] == "body":
-            error.pop("input", None)
+    detail = [
+        _strip_validation_input(error) if error.get("loc", [None])[0] == "body" else error
+        for error in detail
+    ]
     return JSONResponse(
         status_code=response.status_code,
         content={"detail": detail},
