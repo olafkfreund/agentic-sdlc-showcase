@@ -42,17 +42,18 @@ async def request_validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
     response = await fastapi_request_validation_exception_handler(request, exc)
-    detail = json.loads(response.body)["detail"]
+    payload = json.loads(response.body)
+    detail = payload["detail"]
     body_error_found = any(error.get("loc", [None])[0] == "body" for error in detail)
     if not body_error_found:
         return response
-    detail = [
+    payload["detail"] = [
         _strip_validation_input(error) if error.get("loc", [None])[0] == "body" else error
         for error in detail
     ]
     return JSONResponse(
         status_code=response.status_code,
-        content={"detail": detail},
+        content=payload,
         headers=dict(response.headers),
         media_type=response.media_type,
     )
